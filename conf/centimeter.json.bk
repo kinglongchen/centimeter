@@ -1,0 +1,74 @@
+{
+  "common": {
+  },
+  "db": {
+    "dbHost": "",
+    "dbUser": "",
+    "dbPasswd": "",
+    "dbName": "",
+    "dbPort": ""
+  },
+  "ssh": {
+    "sshUserName": "",
+    "sshPassword": "",
+    "sshHost": "",
+    "sshPort": 22,
+    "localBindAddress": "",
+    "localBindPort": 3308,
+    "remoteBindAddress": "",
+    "remoteBindPort": 3306
+  },
+  "email": {
+    "smtpServer": "",
+    "fromAddrMap": {
+      "fromAddr": "",
+      "userName": ""
+    },
+    "emailPassword": "",
+    "toAddrMap": {
+      "": ""
+    }
+  },
+  "report": {
+    "timedelta": 1,
+    "originalDate": {
+      "year": 2015,
+      "month": 7,
+      "day": 7
+    },
+    "excludeFilterList": [
+
+    ],
+    "statusDict": {
+      "BYQX": "订单取消",
+      "BDFK": "待付款",
+      "BYFK": "已付款",
+      "BBFFH": "部分发货",
+      "BYFH": "已发货",
+      "BYQS": "已签收",
+      "BYJS": "已结算",
+      "XYQX": "需求单取消",
+      "XQRBJ": "确认报价单",
+      "XDBJ": "待报价",
+      "XYBJ": "已报价"
+    },
+    "isOrderFilter": [
+      "BDFK",
+      "BYFK",
+      "BBFFH",
+      "BYFH",
+      "BYQS",
+      "BYJS"
+    ],
+    "wishListFilter": [
+      "XDBJ",
+      "XYBJ",
+      "XYQX",
+      "XQRBJ",
+      "BYQX"
+    ]
+  },
+  "excel": {
+    "excelFilePath": "../output/report"
+  }
+}
