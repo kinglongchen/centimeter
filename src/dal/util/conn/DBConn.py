@@ -1,7 +1,8 @@
 # -*- coding:utf-8 -*-
 import importlib
+
 from biz.common.exception.CentimeterException import ErrorTypeException
-from biz.util.log.Logger import Logger
+from common.util.log.Logger import Logger
 
 __author__ = 'chenjinlong'
 from abc import ABCMeta, abstractmethod
@@ -12,7 +13,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
 
-from biz.util.PathUtil import getSorcePath
+from common.util.PathUtil import getSorcePath
 
 import os
 

@@ -3,7 +3,7 @@ __author__ = 'chenjinlong'
 import logging
 from logging.handlers import TimedRotatingFileHandler
 
-from src.biz.util import PathUtil
+from common.util import PathUtil
 
 
 def getLogFilePath():

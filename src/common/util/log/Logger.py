@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
+import BaseConfig
+
 __author__ = 'chenjinlong'
 import logging
 
-from biz.util.log import BaseConfig
 from biz.common.exception.CentimeterException import ErrorTypeException
 
 

@@ -3,7 +3,7 @@ import codecs
 
 __author__ = 'chenjinlong'
 from datetime import datetime, timedelta, time
-from src.biz.util import PathUtil
+from common.util import PathUtil
 import os
 import json
 

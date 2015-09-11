@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 from DBConn import DBConn
-from biz.util.log.Logger import Logger
 from common.config.Config import Config
+from common.util.log.Logger import Logger
 
 __author__ = 'chenjinlong'
 
