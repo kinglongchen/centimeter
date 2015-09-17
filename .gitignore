@@ -2,5 +2,6 @@
 /output/report
 /output/log
 /conf/centimeter.json
+/conf/configChange.sh
 /centimeter.iml
 /.idea
