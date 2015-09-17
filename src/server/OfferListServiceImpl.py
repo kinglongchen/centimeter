@@ -12,3 +12,6 @@ class OfferListServiceImpl(OfferListService):
 
     def getDetailReport(self, excelTool):
         self.offerListFacade.getDetailReport(excelTool)
+
+    def getFeatureReport(self,excelTool):
+        self.offerListFacade.getFeatureReport(excelTool)

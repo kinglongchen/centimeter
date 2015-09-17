@@ -9,8 +9,11 @@ import json
 
 
 class Config(object):
-    emailTextFilePath = os.sep.join([PathUtil.getResourcePath(), "emailText.txt"])
-    toAddrMap = {}
+
+    lopEmailTextFilePath = os.sep.join([PathUtil.getResourcePath(), "lopEmailText.txt"])
+    defaultEmailTextFilePath = os.sep.join([PathUtil.getResourcePath(),"defaultEmailText.txt"])
+    lopToAddrMap = {}
+    kingDeeToAddrMap = {}
     emailPassword = ""
     fromAddrMap = {}
 

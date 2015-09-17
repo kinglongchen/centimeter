@@ -14,3 +14,7 @@ class OfferListService():
     @abstractmethod
     def getDetailReport(self, excelTool):
         pass
+
+    @abstractmethod
+    def getFeatureReport(self,excelTool):
+        pass

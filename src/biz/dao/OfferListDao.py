@@ -21,3 +21,10 @@ class OfferListDao(object):
             return []
         offerListDOList = self.offerListMapper.selectByWishListIdList(wishListIdList)
         return offerListDOList
+
+    def getByReciveTimeSpan(self, dateFrom, dateTo):
+        if dateFrom==None and dateTo==None:
+            return []
+
+        offerListBOList = self.offerListMapper.selectByReciveTimeSpan(dateFrom,dateTo)
+        return offerListBOList

@@ -15,7 +15,7 @@ Config.initConf()
 @SSHTunnel.sshWrapper
 @MySqlConn.dbWrapper
 def main():
-    excelTool = ExcelTool("报表")
+    excelTool = ExcelTool("全车件报表")
     #订单报表
     offerListServiceImpl = OfferListServiceImpl()
     offerListServiceImpl.getReport(excelTool)
@@ -32,7 +32,13 @@ def main():
     #发送邮件
     excelFileName = excelTool.fileName
 
-    EmailTool.sendMail(excelFileName)
+    EmailTool.sendLopMail(excelFileName)
+
+    #金蝶号数据报表
+    excelTool = ExcelTool("金蝶号数据报表")
+    offerListServiceImpl.getFeatureReport(excelTool)
+    excelFileName = excelTool.fileName
+    EmailTool.sendKingDeeReportMail(excelFileName)
 
 main()
 

@@ -163,5 +163,26 @@ class OfferListFacadeImpl(OfferListFacade):
 
         excelTool.export(headers,orderDetailReportDictList,"订单明细报表")
 
+    def getFeatureReport(self, excelTool):
+        headers = [["订单号","offerListSn"],
+                   ["feature","feature"],
+                   ["签收时间","receiveTime"]]
+
+        dateFrom,dateTo = Config.getDateSpan()
+
+
+        offerListBOList = self.offerListDao.getByReciveTimeSpan(dateFrom, dateTo)
+
+        featureReportDictList = []
+        for offerListBO in offerListBOList:
+            featureReportDict = {}
+            featureReportDict["offerListSn"]=offerListBO.offerListSn
+            featureReportDict["feature"]=offerListBO.feature
+            featureReportDict["receiveTime"]=offerListBO.receiveTime.strftime('%Y-%m-%d %H:%M:%S')
+            featureReportDictList.append(featureReportDict)
+
+        excelTool.export(headers,featureReportDictList,"金蝶号数据报表")
+
+
 
 

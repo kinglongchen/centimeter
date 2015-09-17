@@ -30,3 +30,7 @@ class OfferListMapper(object):
 	def selectByWishListIdList(self, wishListIdList):
 		return self.session.query(OfferListDO).filter(OfferListDO.wishListId.in_(wishListIdList)) \
 			.filter(OfferListDO.isDeleted=='N').all()
+
+	def selectByReciveTimeSpan(self, dateFrom, dateTo):
+		return self.session.query(OfferListDO).filter(OfferListDO.receiveTime>=dateFrom).\
+			filter(OfferListDO.receiveTime<dateTo).filter(OfferListDO.isDeleted=="N").all()

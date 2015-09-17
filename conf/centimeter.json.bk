@@ -25,9 +25,12 @@
       "userName": ""
     },
     "emailPassword": "",
-    "toAddrMap": {
+    "lopToAddrMap": {
       "": ""
     }
+    "kingDeeToAddrMap": {
+          "": ""
+        }
   },
   "report": {
     "timedelta": 1,

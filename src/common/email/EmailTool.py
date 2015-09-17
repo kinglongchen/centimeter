@@ -79,20 +79,34 @@ class EmailTool(object):
         return str.decode('utf-8') if not isinstance(str,unicode) else str
 
     @classmethod
-    def sendMail(cls, fileName):
+    def sendMail(cls, fileName,toAddrMap=Config.lopToAddrMap,
+                 emailTextFilePath=Config.defaultEmailTextFilePath,
+                 subject=None):
         emailTool = cls()
         emailTool.start(Config.smtpServer, Config.fromAddrMap, Config.emailPassword)
 
-        file = open(Config.emailTextFilePath,"r")
+        file = open(emailTextFilePath,"r")
         emialText = file.read()
 
         emailTool.attachText(emialText)
         emailTool.attachFile(fileName)
-        emailTool.send((date.today() - timedelta(days=1)).strftime("%Y年%m月%d日报表"), Config.toAddrMap)
+        subjectName = (date.today() - timedelta(days=1)).strftime("%Y年%m月%d日报表");
+        if subject is not None:
+            subjectName = subject + subjectName
+        emailTool.send(subjectName, toAddrMap)
         emailTool.stop()
+
+    @classmethod
+    def sendLopMail(cls,fileName):
+        cls.sendMail(fileName,toAddrMap=Config.lopToAddrMap,emailTextFilePath=Config.lopEmailTextFilePath,subject="全车件")
+
+    @classmethod
+    def sendKingDeeReportMail(cls,fileName,):
+        cls.sendMail(fileName,toAddrMap=Config.kingDeeToAddrMap,subject="金蝶号数据")
+
 
 
 if __name__ == "__main__":
-    file = open(Config.emailTextFilePath,"r")
+    file = open(Config.defaultEmailTextFilePath,"r")
     emialText = file.read()
     print emialText
