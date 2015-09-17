@@ -1,4 +1,6 @@
 # coding=utf-8
+import os
+
 __author__ = 'chenjinlong'
 import logging
 from logging.handlers import TimedRotatingFileHandler
@@ -7,7 +9,11 @@ from common.util import PathUtil
 
 
 def getLogFilePath():
-    return '/'.join([PathUtil.getLogDirPath(),'common.log'])
+    logFileDirPath = PathUtil.getLogDirPath()
+    if not os.path.exists(logFileDirPath) or not os.path.isdir(logFileDirPath):
+        os.makedirs(PathUtil.getLogDirPath())
+
+    return '/'.join([logFileDirPath,'common.log'])
 
 # 创建一个handler，用于写入日志文件
 fh = TimedRotatingFileHandler(getLogFilePath(),'D')
