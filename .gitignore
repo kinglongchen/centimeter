@@ -1,7 +1,8 @@
-/conf/centimeter2.json
+/resource/conf/configChange.sh
+/resource/conf/centimeter.json
+/resource/conf/centimeter2.json
 /output/report
 /output/log
-/conf/centimeter.json
-/conf/configChange.sh
+/tests
 /centimeter.iml
 /.idea
