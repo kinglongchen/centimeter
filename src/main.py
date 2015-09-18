@@ -30,14 +30,14 @@ def main():
     summaryServiceImpl = SummaryServiceImpl()
     summaryServiceImpl.getDetailReport(excelTool)
     #发送邮件
-    excelFileName = excelTool.fileName
+    excelFileName = excelTool.getFileName()
 
     EmailTool.sendLopMail(excelFileName)
 
     #金蝶号数据报表
     excelTool = ExcelTool("金蝶号数据报表")
     offerListServiceImpl.getFeatureReport(excelTool)
-    excelFileName = excelTool.fileName
+    excelFileName = excelTool.getFileName()
     EmailTool.sendKingDeeReportMail(excelFileName)
 
 main()

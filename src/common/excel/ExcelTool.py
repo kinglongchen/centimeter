@@ -38,6 +38,12 @@ class ExcelTool(object):
         booksheet.col(0).width = 0x0fff
         self.workbook.save(self.fileName)
 
+    def getFileName(self):
+        if os.path.exists(self.fileName) and os.path.isfile(self.fileName):
+            return self.fileName
+        else:
+            return None
+
     def fileNameProcesse(self, fileName):
         now = date.today() - timedelta(days=1)
         excelFilePath = code.encode2utf8(Config.excelFilePath)

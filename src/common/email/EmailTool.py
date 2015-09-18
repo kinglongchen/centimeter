@@ -85,11 +85,16 @@ class EmailTool(object):
         emailTool = cls()
         emailTool.start(Config.smtpServer, Config.fromAddrMap, Config.emailPassword)
 
-        file = open(emailTextFilePath,"r")
-        emialText = file.read()
 
-        emailTool.attachText(emialText)
-        emailTool.attachFile(fileName)
+        if fileName:
+            file = open(emailTextFilePath,"r")
+            emialText = file.read()
+            emailTool.attachText(emialText)
+            emailTool.attachFile(fileName)
+        else:
+            file = open(Config.noReportEmailTextFilePath,"r")
+            emialText = file.read()
+            emailTool.attachText(emialText)
         subjectName = (date.today() - timedelta(days=1)).strftime("%Y年%m月%d日报表");
         if subject is not None:
             subjectName = subject + subjectName

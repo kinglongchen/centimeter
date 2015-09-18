@@ -172,7 +172,8 @@ class OfferListFacadeImpl(OfferListFacade):
 
 
         offerListBOList = self.offerListDao.getByReciveTimeSpan(dateFrom, dateTo)
-
+        if len(offerListBOList)==0:
+            return
         featureReportDictList = []
         for offerListBO in offerListBOList:
             featureReportDict = {}

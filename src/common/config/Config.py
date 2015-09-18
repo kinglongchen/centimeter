@@ -12,6 +12,7 @@ class Config(object):
 
     lopEmailTextFilePath = os.sep.join([PathUtil.getResourcePath(), "lopEmailText.txt"])
     defaultEmailTextFilePath = os.sep.join([PathUtil.getResourcePath(),"defaultEmailText.txt"])
+    noReportEmailTextFilePath = os.sep.join((PathUtil.getResourcePath(),"noReportEmailText.txt"))
     lopToAddrMap = {}
     kingDeeToAddrMap = {}
     emailPassword = ""
