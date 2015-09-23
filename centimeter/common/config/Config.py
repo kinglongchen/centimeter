@@ -63,6 +63,7 @@ class Config(object):
     remoteBindAddress = ""
     remoteBindPort = None
 
+    excludeFilterSeller=[]
     @classmethod
     def initConf(cls):
         configFilePath = os.sep.join([PathUtil.getConfigPath(), "centimeter.json"])

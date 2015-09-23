@@ -25,12 +25,14 @@ class OfferListMapper(object):
 		return self.session.query(OfferListDO).filter(OfferListDO.gmtCreate>=dateFrom)\
 			.filter(OfferListDO.gmtCreate<dateTo)\
 			.filter(OfferListDO.status.in_(Config.isOrderFilter))\
-			.filter(OfferListDO.isDeleted=='N').filter(~OfferListDO.userId.in_(userIdList)).all()
+			.filter(OfferListDO.isDeleted=='N').filter(~OfferListDO.userId.in_(userIdList))\
+			.filter(~OfferListDO.companyName.like("%测试%")).all()
 
 	def selectByWishListIdList(self, wishListIdList):
 		return self.session.query(OfferListDO).filter(OfferListDO.wishListId.in_(wishListIdList)) \
 			.filter(OfferListDO.isDeleted=='N').all()
 
-	def selectByReciveTimeSpan(self, dateFrom, dateTo):
+	def selectByReciveTimeSpan(self, dateFrom, dateTo,exFilterSeller):
 		return self.session.query(OfferListDO).filter(OfferListDO.receiveTime>=dateFrom).\
-			filter(OfferListDO.receiveTime<dateTo).filter(OfferListDO.isDeleted=="N").all()
+			filter(OfferListDO.receiveTime<dateTo).filter(OfferListDO.isDeleted=="N").\
+			filter(~OfferListDO.sellerId.in_(exFilterSeller)).all()

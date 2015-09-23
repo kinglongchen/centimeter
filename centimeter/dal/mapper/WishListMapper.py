@@ -1,3 +1,4 @@
+# coding=utf-8
 from common.config.Config import Config
 
 __author__ = 'chenjinlong'
@@ -16,4 +17,5 @@ class WishListMapper(object):
         return self.session.query(WishListDO).filter(WishListDO.gmtCreate>=dateFrom) \
             .filter(WishListDO.gmtCreate<dateTo) \
             .filter(WishListDO.status.in_(Config.wishListFilter)) \
-            .filter(WishListDO.isDeleted=='N').filter(~WishListDO.userId.in_(userIdList)).all()
+            .filter(WishListDO.isDeleted=='N').filter(~WishListDO.userId.in_(userIdList))\
+            .filter(~WishListDO.companyName.like("%测试%")).all()
