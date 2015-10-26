@@ -9,3 +9,6 @@ class SummaryServiceImpl(SummaryService):
 
     def getDetailReport(self, excelTool):
         return self.summaryFacade.getDetailReport(excelTool)
+
+    def getStatReprot(self, excelTool):
+        return self.summaryFacade.getStatReport(excelTool)

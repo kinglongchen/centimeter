@@ -16,6 +16,10 @@ Config.initConf()
 @MySqlConn.dbWrapper
 def main():
     excelTool = ExcelTool("全车件报表")
+    #统计汇总表
+    summaryServiceImpl = SummaryServiceImpl()
+    summaryServiceImpl.getStatReprot(excelTool)
+
     #订单报表
     offerListServiceImpl = OfferListServiceImpl()
     offerListServiceImpl.getReport(excelTool)
@@ -27,7 +31,6 @@ def main():
     #需求单明细报表
     wishListServiceImpl.getDetailReport(excelTool)
     #汇总明细报表
-    summaryServiceImpl = SummaryServiceImpl()
     summaryServiceImpl.getDetailReport(excelTool)
     #发送邮件
     excelFileName = excelTool.getFileName()
