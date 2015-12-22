@@ -9,9 +9,10 @@ class UserDao(object):
         return self.userMapper.selectByUserName(userNameList)
 
     def getExcludeUserIdList(self):
-        excludeFilterList = Config.excludeFilterList
-        userList = self.getByUserNameList(excludeFilterList)
-        userIdList = []
-        for user in userList:
-            userIdList.append(user.userId)
-        return userIdList
+        return Config.excludeFilterUserIdList;
+        # excludeFilterList = Config.excludeFilterList
+        # userList = self.getByUserNameList(excludeFilterList)
+        # userIdList = []
+        # for user in userList:
+        #     userIdList.append(user.userId)
+        # return userIdList

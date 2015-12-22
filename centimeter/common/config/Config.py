@@ -20,7 +20,10 @@ class Config(object):
 
     smtpServer = ""
 
+    reportDate = "";
     excludeFilterList = []
+
+    excludeFilterUserIdList = []
 
     statusDict = {'BYQX': '订单取消',
                   'BDFK': '待付款',

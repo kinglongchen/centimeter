@@ -39,6 +39,9 @@
       "month": 7,
       "day": 7
     },
+    "excludeFilterUserIdList":[
+      177427,154147,86290,58,40631
+    ],
     "excludeFilterList": [
     ],
     "excludeFilterSeller": [
