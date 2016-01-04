@@ -95,7 +95,7 @@ class EmailTool(object):
             file = open(Config.noReportEmailTextFilePath,"r")
             emialText = file.read()
             emailTool.attachText(emialText)
-        subjectName = (date.today() - timedelta(days=1)).strftime("%Y年%m月%d日报表");
+        subjectName = (Config.getDate().date() - timedelta(days=1)).strftime("%Y年%m月%d日报表");
         if subject is not None:
             subjectName = subject + subjectName
         emailTool.send(subjectName, toAddrMap)

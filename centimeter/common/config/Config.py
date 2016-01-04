@@ -20,7 +20,6 @@ class Config(object):
 
     smtpServer = ""
 
-    reportDate = "";
     excludeFilterList = []
 
     excludeFilterUserIdList = []
@@ -42,6 +41,10 @@ class Config(object):
 
     # 需求单过滤
     wishListFilter = ['XDBJ', 'XYBJ', 'XYQX', 'XQRBJ', 'BYQX']
+
+    isFixedDate = True
+
+    reportDate = {"year":2015,"month":7,"day":7}
 
     timeDelta = 1
 
@@ -99,26 +102,27 @@ class Config(object):
         dbJson = confJson["db"]
         for k, v in dbJson.iteritems():
             setattr(cls, k, v)
+    @classmethod
+    def getDate(cls):
+        if cls.isFixedDate:
+            return datetime(cls.reportDate["year"],cls.reportDate["month"],cls.reportDate["day"])
+        return datetime.now()
 
     @classmethod
     def getDateSpan(cls):
-        dt = datetime.now()
+        dt = cls.getDate()
         dateFrom = datetime.combine(dt.date() - timedelta(cls.timeDelta), time.min)
         dateTo = datetime.combine(dt.date(), time.min)
         return dateFrom, dateTo
 
     @classmethod
     def getHistoryDateSpan(cls):
-        dt = datetime.now()
+        dt = cls.getDate()
         dateFrom = datetime(cls.originalDate["year"], cls.originalDate["month"], cls.originalDate["day"])
         dateTo = datetime.combine(dt.date(), time.min)
         return dateFrom, dateTo
 
 
 if __name__ == "__main__":
-    # Config.initConf()
-    # print Config.excelFilePath
-    a = '{"a":"陈"}'
-    dict = json.loads(a)
-    print dict["a"]
-    print "end"
+    Config.initConf()
+    print(Config.getDate())

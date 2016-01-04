@@ -45,7 +45,8 @@ class ExcelTool(object):
             return None
 
     def fileNameProcesse(self, fileName):
-        now = date.today() - timedelta(days=1)
+        # now = date.today() - timedelta(days=1)
+        now = Config.getDate().date() - timedelta(days=1)
         excelFilePath = code.encode2utf8(Config.excelFilePath)
         excelFilePath = excelFilePath + "/" if excelFilePath and not excelFilePath.endswith("/") else excelFilePath
         excelFilePath +=now.strftime("%Y年%m月报表")+"/"

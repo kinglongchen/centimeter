@@ -34,6 +34,8 @@
   },
   "report": {
     "timedelta": 1,
+    "isFixedDate":false,
+    "reportDate" :{"year":2015,"month":7,"day":7},
     "originalDate": {
       "year": 2015,
       "month": 7,
