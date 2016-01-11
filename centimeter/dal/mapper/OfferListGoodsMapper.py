@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+from common.config import Config
+from common.util.SShTunnel import SSHTunnel
+from dal.util.conn import MySqlConn
+
 __author__ = 'chenjinlong'
 
 from dal.domain.do.OfferListGoodsDO import OfferListGoodsDO
@@ -20,3 +24,8 @@ class OfferListGoodsMapper(object):
 		return self.session.query(OfferListGoodsDO). \
 			filter(OfferListGoodsDO.offerListId.in_(offerListIdList)). \
 			filter(OfferListGoodsDO.isDeleted=="N").filter(OfferListGoodsDO.isUserSelectPay==1).all()
+
+	def listOfferCount(self, offerListIdList):
+		return self.session.query(OfferListGoodsDO).filter(OfferListGoodsDO.gmtCreate!=None).\
+			filter(OfferListGoodsDO.offerListId.in_(offerListIdList)).\
+			group_by(OfferListGoodsDO.offerListId,OfferListGoodsDO.gmtCreate).all()

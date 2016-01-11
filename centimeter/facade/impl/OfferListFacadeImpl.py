@@ -24,6 +24,7 @@ class OfferListFacadeImpl(OfferListFacade):
     def getReport(self, excelTool):
         headers = [["订单号", "offerListSn"],
                    ["订单状态", "status"],
+                   ["报价次数","offerCount"],
                    ["维修店名称", "companyName"],
                    ["填单人", "wishListMaker"],
                    ["填单人手机", "wishListMakerTel"],
@@ -55,11 +56,15 @@ class OfferListFacadeImpl(OfferListFacade):
         for offerListActionReasonBO in offerListActionReasonBOList:
             offerListActionReasonOfferListIdKeyDict[offerListActionReasonBO.offerListId] = offerListActionReasonBO
 
+        #获取需求单报价次数
+        olgOfferCountDict = self.offerListGoodsDao.countOfferNumber(offerListIdList);
+
         orderReportDictList = []
 
         for offerList in offerListBOList:
             orderReportDict = {}
             orderReportDict['offerListSn'] = offerList.offerListSn.strip()
+            orderReportDict['offerCount'] = olgOfferCountDict.get(offerList.id,"")
             orderReportDict['sellerName'] = offerList.sellerName.strip()
             orderReportDict['status'] = Config.statusDict.get(offerList.status, "")
             wishList = wishListIdKeyDict.get(offerList.wishListId, None)
@@ -84,6 +89,7 @@ class OfferListFacadeImpl(OfferListFacade):
     def getDetailReport(self, excelTool):
         headers = [["订单号", "offerListSn"],
                    ["订单状态", "status"],
+                   ["报价次数","offerCount"],
                    ["需求单配件信息", "wishListGoodsInfo"],
                    ["订单配件信息", "offerListGoodsInfo"],
                    ["订单金额", "paidOfferAmount"],
@@ -124,6 +130,9 @@ class OfferListFacadeImpl(OfferListFacade):
         # 获取订单商品信息
         olgInfoOfferListIdKeyDict = self.offerListGoodsDao.getInfoDictOfferListIdKeyByOfferListIdList(offerListIdList)
 
+        #获取需求单报价次数
+        olgOfferCountDict = self.offerListGoodsDao.countOfferNumber(offerListIdList);
+
         orderDetailReportDictList = []
 
         for offerList in offerListBOList:
@@ -131,6 +140,7 @@ class OfferListFacadeImpl(OfferListFacade):
             wishListId = offerList.wishListId
             offerListId = offerList.id
             orderDetailReportDict['offerListSn'] = offerList.offerListSn.strip()
+            orderDetailReportDict['offerCount'] = olgOfferCountDict.get(offerListId,"")
             orderDetailReportDict['sellerName'] = offerList.sellerName.strip()
             orderDetailReportDict['status'] = Config.statusDict.get(offerList.status, "")
             orderDetailReportDict["wishListGoodsInfo"] = wlgInfoWishListIdKeyDict.get(wishListId, "")

@@ -20,3 +20,13 @@ class OfferListGoodsDao(object):
             olgInfo = "%s%s" % (olgInfo, curGoodsInfo)
             olgInfoOfferListIdKeyDict[offerListGoods.offerListId] = olgInfo
         return olgInfoOfferListIdKeyDict
+
+    def countOfferNumber(self, offerListIdList):
+        offerListGoodsList = self.offerListGoodsMapper.listOfferCount(offerListIdList);
+        olgOfferCountDict = {}
+        for offerListGoods in offerListGoodsList:
+            olgOfferCount = olgOfferCountDict.get(offerListGoods.offerListId,0)
+            olgOfferCount += 1
+            olgOfferCountDict[offerListGoods.offerListId] = olgOfferCount
+
+        return olgOfferCountDict
