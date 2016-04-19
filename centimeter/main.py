@@ -6,7 +6,6 @@ from server.WishListServiceImpl import WishListServiceImpl
 
 __author__ = 'chenjinlong'
 from dal.util.conn.MySqlConn import MySqlConn
-from common.util.SShTunnel import SSHTunnel
 from server.OfferListServiceImpl import OfferListServiceImpl
 from common.excel.ExcelTool import ExcelTool
 #初始化配置参数

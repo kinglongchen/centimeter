@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-from common.config import Config
-from common.util.SShTunnel import SSHTunnel
-from dal.util.conn import MySqlConn
 
 __author__ = 'chenjinlong'
 
