@@ -12,7 +12,7 @@ from common.excel.ExcelTool import ExcelTool
 #初始化配置参数
 Config.initConf()
 
-@SSHTunnel.sshWrapper
+# @SSHTunnel.sshWrapper
 @MySqlConn.dbWrapper
 def main():
     excelTool = ExcelTool("全车件报表")
