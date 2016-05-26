@@ -2,6 +2,7 @@
 from datetime import date, time
 from dal.domain.do.OrderReceiptDO import OrderReceiptDO
 from dal.domain.do.OrderReceiptRecordDO import OrderReceiptRecordDO
+from dal.domain.do.PayOrderDO import PayOrderDO
 from dal.mapper.OrderInfoMapper import OrderInfoMapper
 from dal.mapper.OrderReceiptMapper import OrderReceiptMapper
 from dal.mapper.OrderReceiptRecordMapper import OrderReceiptRecordMapper
@@ -28,6 +29,14 @@ class Finance4ReceiptService():
     DO_ONLINE_SUCCESS_TYPE = 'DO_ONLINE_SUCCESS'
 
     BATCH_NUMBER = 50
+
+
+    RETRY_ID_CAPACITY = 100
+
+    retryPayOrderIdList = []
+
+    def __init__(self,fileInput):
+        self.fileInput = fileInput
 
 
     def doScript(self):
@@ -109,13 +118,16 @@ class Finance4ReceiptService():
             start += self.BATCH_NUMBER
             payOrderDOList = self.payOrderMapper.selectBatch(start,self.BATCH_NUMBER)
 
+        # 最后要保存一下出错的信息
+        self.saveFailProcessInfo(self.retryPayOrderIdList)
+
     def doAssemble(self,payOrder,orderInfoList,payOrderItemList):
 
         orderReceipt =  OrderReceiptDO()
         # payOrder = PayOrderDO()
         # payOrderItem = PayOrderItemDO()
-        orderReceipt.gmtCreate = time.strptime("%Y-%m-%d %H:%M:%S")
-        orderReceipt.gmtModified = time.strptime("%Y-%m-%d %H:%M:%S")
+        orderReceipt.gmtCreate = time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(time.time()))
+        orderReceipt.gmtModified = time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(time.time()))
         orderReceipt.financeAccountId = payOrder.financeAccountId
         orderReceipt.platformId = payOrder.platformId
         orderReceipt.platformName = payOrder.platformName
@@ -133,6 +145,7 @@ class Finance4ReceiptService():
         return orderReceipt,receiptRecord4ReceivedList
 
     def receiptTypeJuge(self,payOrder,orderInfoList,payOrderItemList):
+        # TODO
         return self.DO_ONLINE_SUCCESS_TYPE
 
     def doOnlineSuccess(self,orderReceipt,payOrder,orderInfoList,payOrderItemList):
@@ -144,91 +157,146 @@ class Finance4ReceiptService():
         receiptRecord4ReceivedList = []
         receiptRecord4ReceivedList.append(self.doOnline4Recevied(orderReceipt,payOrder,orderInfo,payOrderItem))
         receiptRecord4ReceivedList.append(self.doOnline4OutStock(orderReceipt,payOrder,orderInfo,payOrderItem))
-        receiptRecord4ReceivedList.append(self.doOnline4PaidConfirm(orderReceipt,payOrder,orderInfo,payOrderItem))
+        # receiptRecord4ReceivedList.append(self.doOnline4PaidConfirm(orderReceipt,payOrder,orderInfo,payOrderItem))
 
         return receiptRecord4ReceivedList
 
+    def doOnlineCancel(self,orderReceipt,payOrder,orderInfoList,payOrderItemList):
+        if self.check4Online(payOrder,orderInfoList,payOrderItemList):
+            return
+        orderInfo = orderInfoList[0]
+        payOrderItem = payOrderItemList[0]
+        receiptRecord4ReceivedList = []
+        receiptRecord4ReceivedList.append(self.doOnline4Recevied(orderReceipt,payOrder,orderInfo,payOrderItem))
+        receiptRecord4ReceivedList.append(self.doOnlineCancel(orderReceipt,payOrder,orderInfo,payOrderItem))
+        receiptRecord4ReceivedList.append(self.doOnlineCancelRefund(orderReceipt,payOrder,orderInfo,payOrderItem))
+
+    def doOnlinePartReject(self,orderReceipt,payOrder,orderInfoList,payOrderItemList):
+        if self.check4Online(payOrder,orderInfoList,payOrderItemList):
+            return
+        orderInfo = orderInfoList[0]
+        payOrderItem = payOrderItemList[0]
+        receiptRecord4ReceivedList = []
+        # FIXME 看看是否正确
+        receiptRecord4ReceivedList.append(self.doOnline4Recevied(orderReceipt,payOrder,orderInfo,payOrderItem))
+        receiptRecord4ReceivedList.append(self.doOnline4OutStock(orderReceipt,payOrder,orderInfo,payOrderItem))
+        receiptRecord4ReceivedList.append(self.doOnlinePartReject(orderReceipt,payOrder,orderInfo,payOrderItem))
+        receiptRecord4ReceivedList.append(self.doOnlinePartRefund(orderReceipt,payOrder,orderInfo,payOrderItem))
+        receiptRecord4ReceivedList.append(self.doReturnGoods(orderReceipt,payOrder,orderInfo,payOrderItem))
+        receiptRecord4ReceivedList.append(self.doReturnGoodsRefund(orderReceipt,payOrder,orderInfo,payOrderItem))
+
+        return receiptRecord4ReceivedList
 
 # 在线预收
     def doOnline4Recevied(self,orderReceipt,payOrder,orderInfo,payOrderItem):
-        receiptRecord = OrderReceiptRecordDO()
-        #TODO
+        # receiptRecord = OrderReceiptRecordDO()
+        receiptRecord = self.initOrderReceiptRecordDO(orderReceipt,payOrder,orderInfo,payOrderItem)
+        receiptRecord.action = 'online_received'
+
+        receiptRecord.hasReceivedAmount = payOrder.payOrderAmount
+        self.doProcessReceipt(orderReceipt,receiptRecord)
 
         return receiptRecord
 
     # 在线出库
     def doOnline4OutStock(self,orderReceipt,payOrder,orderInfo,payOrderItem):
-        receiptRecord = OrderReceiptRecordDO()
-        #TODO
+        receiptRecord = self.initOrderReceiptRecordDO(orderReceipt,payOrder,orderInfo,payOrderItem)
+        receiptRecord.action = 'online_out_stock'
+        receiptRecord.needReceiveAmount = payOrder.payOrderAmount
+
+        self.doProcessReceipt(orderReceipt,receiptRecord)
 
         return receiptRecord
+
     # 在线财务确认收款
     def doOnline4PaidConfirm(self,orderReceipt,payOrder,orderInfo,payOrderItem):
-        receiptRecord = OrderReceiptRecordDO()
-        #TODO
+        receiptRecord = self.initOrderReceiptRecordDO(orderReceipt,payOrder,orderInfo,payOrderItem)
+        # 目前什么也不做
 
         return receiptRecord
 
     # 部分拒收
     def doOnlinePartReject(self,orderReceipt,payOrder,orderInfo,payOrderItem):
-        receiptRecord = OrderReceiptRecordDO()
-        #TODO
+        receiptRecord = self.initOrderReceiptRecordDO(orderReceipt,payOrder,orderInfo,payOrderItem)
+        receiptRecord.action = 'online_part_reject'
+        receiptRecord.rejectAmount = payOrder.payOrderAmount
+        receiptRecord.needReceiveAmount = 0-payOrder.payOrderAmount
 
+        self.doProcessReceipt(orderReceipt,receiptRecord)
         return receiptRecord
 
     # 拒收退款
     def doOnlinePartRefund(self,orderReceipt,payOrder,orderInfo,payOrderItem):
-        receiptRecord = OrderReceiptRecordDO()
-        #TODO
+        receiptRecord = self.initOrderReceiptRecordDO(orderReceipt,payOrder,orderInfo,payOrderItem)
+        receiptRecord.action = 'online_reject_refund'
+        receiptRecord.hasReceivedAmount = 0-payOrder.payOrderAmount
 
+        self.doProcessReceipt(orderReceipt,receiptRecord)
         return receiptRecord
 
     # 退货
     def doReturnGoods(self,orderReceipt,payOrder,orderInfo,payOrderItem):
-        receiptRecord = OrderReceiptRecordDO()
-        #TODO
+        receiptRecord = self.initOrderReceiptRecordDO(orderReceipt,payOrder,orderInfo,payOrderItem)
+        receiptRecord.action = 'return_goods'
+        receiptRecord.needReceiveAmount = 0-payOrder.payOrderAmount
 
+        self.doProcessReceipt(orderReceipt,receiptRecord)
         return receiptRecord
 
     # 退货退款
     def doReturnGoodsRefund(self,orderReceipt,payOrder,orderInfo,payOrderItem):
-        receiptRecord = OrderReceiptRecordDO()
-        #TODO
+        receiptRecord = self.initOrderReceiptRecordDO(orderReceipt,payOrder,orderInfo,payOrderItem)
+        receiptRecord.action = 'return_goods_refund'
+        receiptRecord.hasReceivedAmount = 0-payOrder.payOrderAmount
+
+        self.doProcessReceipt(orderReceipt,receiptRecord)
 
         return receiptRecord
 
     # 拆单失效
     def doSplitOrderOriInvalid(self,orderReceipt,payOrder,orderInfo,payOrderItem):
-        receiptRecord = OrderReceiptRecordDO()
-        #TODO
+        receiptRecord = self.initOrderReceiptRecordDO(orderReceipt,payOrder,orderInfo,payOrderItem)
+        receiptRecord.action = 'split_order_ori_invalid'
+        receiptRecord.hasReceivedAmount = 0-payOrder.payOrderAmount
+
+        self.doProcessReceipt(orderReceipt,receiptRecord)
 
         return receiptRecord
 
     # 拆单新单
     def doSplitOrderChild(self,orderReceipt,payOrder,orderInfo,payOrderItem):
-        receiptRecord = OrderReceiptRecordDO()
-        #TODO
+        receiptRecord = self.initOrderReceiptRecordDO(orderReceipt,payOrder,orderInfo,payOrderItem)
+        receiptRecord.action = 'split_order_child'
+        receiptRecord.hasReceivedAmount = payOrder.payOrderAmount
 
+        self.doProcessReceipt(orderReceipt,receiptRecord)
         return receiptRecord
     # 取消订单
     def doOnlineCancel(self,orderReceipt,payOrder,orderInfo,payOrderItem):
-        receiptRecord = OrderReceiptRecordDO()
-        #TODO
+        receiptRecord = self.initOrderReceiptRecordDO(orderReceipt,payOrder,orderInfo,payOrderItem)
+        receiptRecord.action = 'online_cancel'
+        receiptRecord.rejectAmount = payOrder.payOrderAmount
+
+        self.doProcessReceipt(orderReceipt,receiptRecord)
 
         return receiptRecord
+
     # 取消退款
     def doOnlineCancelRefund(self,orderReceipt,payOrder,orderInfo,payOrderItem):
-        receiptRecord = OrderReceiptRecordDO()
-        #TODO
+        receiptRecord = self.initOrderReceiptRecordDO(orderReceipt,payOrder,orderInfo,payOrderItem)
+        receiptRecord.action = 'online_cancel_refund'
+        receiptRecord.hasReceivedAmount =0- payOrder.payOrderAmount
+
+        self.doProcessReceipt(orderReceipt,receiptRecord)
 
         return receiptRecord
 
     def check4Online(self, payOrder, orderInfoList, payOrderItemList):
         if len(orderInfoList) > 1 or len(payOrderItemList) >1:
-            # TODO
             self.doRetryProcess(payOrder)
             return False
         return True
+
     def check4NotNull(self,payOrder, orderInfoList, payOrderItemList):
         if len(orderInfoList) <=0 or len(payOrderItemList) <= 0:
             self.doRetryProcess(payOrder)
@@ -236,7 +304,11 @@ class Finance4ReceiptService():
         return True
 
     def doRetryProcess(self, payOrder):
-        # TODO 将初始化失败的payOrder记录一下
+        # 将初始化失败的payOrder记录一下
+        self.retryPayOrderIdList.append(payOrder.id)
+        if len(self.retryPayOrderIdList) >= self.RETRY_ID_CAPACITY:
+            self.saveFailProcessInfo(self.retryPayOrderIdList)
+            self.retryPayOrderIdList=[]
         pass
 
     def getOrderInfoDict(self, outOrderSnList):
@@ -260,6 +332,44 @@ class Finance4ReceiptService():
                 payOrderItemEntry = []
             payOrderItemEntry.append(payOrderItem)
         return payOrderItemDict
+
+    def saveFailProcessInfo(self, retryPayOrderIdList):
+        if (len(retryPayOrderIdList)) <= 0:
+            return
+        saveInfo = ""
+        for payOrderId in retryPayOrderIdList:
+            saveInfo += str(payOrderId)+","
+
+        self.fileInput.write(saveInfo)
+
+
+
+
+
+
+    def getFailInfoFileName(self):
+        filePath = "../output/receipt/retryfile.txt"
+        return filePath
+
+    def initOrderReceiptRecordDO(self,orderReceipt,payOrder,orderInfo,payOrderItem):
+        receiptRecord = OrderReceiptRecordDO()
+        receiptRecord.gmtCreate = time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(time.time()))
+        receiptRecord.gmtModified = time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(time.time()))
+        receiptRecord.platformId = payOrder.platformId
+        receiptRecord.platformName = payOrder.platformName
+        receiptRecord.outOrderSn = payOrder.outOrderSn
+
+        return receiptRecord
+
+    def doProcessReceipt(self, orderReceipt, receiptRecord):
+
+        orderReceipt.rejectAmount = orderReceipt.rejectAmount+receiptRecord.rejectAmount
+        orderReceipt.needReceiveAmount = orderReceipt.needReceiveAmount + receiptRecord.needReceiveAmount
+        orderReceipt.hasReceivedAmount = orderReceipt.hasReceivedAmount + receiptRecord.hasReceivedAmount
+        orderReceipt.remainingAmount = orderReceipt.needReceiveAmount + orderReceipt.needReceiveAmount
+        receiptRecord.remainingAmount = orderReceipt.remainingAmount
+
+
 
 
 def testFunc(var):

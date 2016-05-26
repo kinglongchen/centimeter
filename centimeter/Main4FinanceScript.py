@@ -10,9 +10,16 @@ Config.initConf()
 
 @MySqlConn.dbWrapper
 def main():
-    service = Finance4ReceiptService()
+    fileInput = open("../output/receipt/retryfile.txt","w")
+    try:
+        service = Finance4ReceiptService(fileInput)
 
-    payOrderList = service.selectBatch(0)
+        payOrderList = service.selectBatch(0)
+    except Exception,e:
+        print e
+    finally:
+        fileInput.close()
+
 
     print len(payOrderList)
 

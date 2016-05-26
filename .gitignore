@@ -8,3 +8,5 @@
 /.idea
 /resource/conf/upConfigFile.sh
 /out
+/resource/conf/centimeter4.json
+/output
