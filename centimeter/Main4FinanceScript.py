@@ -12,6 +12,8 @@ Config.initConf()
 def main():
     service = Finance4ReceiptService()
 
-    service.doInsert4Receipt()
+    payOrderList = service.selectBatch(0)
+
+    print len(payOrderList)
 
 main()

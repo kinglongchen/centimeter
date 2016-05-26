@@ -15,3 +15,7 @@ class OrderInfoMapper(object):
 	"""
 	def selectByPrimaryKey(self,id):
 		return self.session.query(OrderInfoDO).filter(OrderInfoDO.id==id).one()
+
+	def selectByOutOrderSnList(self, outOrderSnList):
+		return self.session.query(OrderInfoDO).filter(OrderInfoDO.isDeleted=='N')\
+			.filter(OrderInfoDO.orderSn.in_(outOrderSnList)).all()

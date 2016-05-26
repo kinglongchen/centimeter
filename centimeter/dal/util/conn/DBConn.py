@@ -84,7 +84,6 @@ class DBConn():
 
 
 
-
 def getClassName(moduleName):
     moduleName = ""
     className = moduleName

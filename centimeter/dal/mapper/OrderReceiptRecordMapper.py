@@ -20,3 +20,7 @@ class OrderReceiptRecordMapper(object):
 		rs = self.session.add(OrderReceiptRecordDO)
 		self.session.commit()
 		return rs
+
+	def batchInsert(self, orderReceiptRecord4InsertList,session):
+		rs = session.add_all(orderReceiptRecord4InsertList)
+		return rs
