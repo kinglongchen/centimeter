@@ -111,7 +111,7 @@ class OrderInfoDO(Base):
 	bonus=Column('bonus',Float)
 
 	#订单金额
-	orderAmount=Column('order_amount',Float)
+	orderAmount=Column('order_amount',Float,default='0.00')
 
 	#真实价格
 	oriOrderAmount=Column('ori_order_amount',Float)

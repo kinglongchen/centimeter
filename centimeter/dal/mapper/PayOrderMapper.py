@@ -18,3 +18,7 @@ class PayOrderMapper(object):
 
 	def selectBatch(self,start,number):
 		return self.session.query(PayOrderDO).order_by(PayOrderDO.id)[start:number]
+
+	def selectByOutOrderSnList(self, outOrderSnList):
+		return self.session.query(PayOrderDO).filter(PayOrderDO.isDeleted=='N') \
+			.filter(PayOrderDO.outOrderSn.in_(outOrderSnList)).all()

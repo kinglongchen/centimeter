@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 __author__ = 'chenjinlong'
-from sqlalchemy import Column,SmallInteger,DateTime,SmallInteger,DateTime,SmallInteger,String,SmallInteger,SmallInteger,String,String,String,Float,Float,Float,Float,String
+from sqlalchemy import Column,SmallInteger,DateTime,SmallInteger,DateTime,SmallInteger,String,SmallInteger,SmallInteger,String,String,String,Float,Float,Float,Float,Float,String
 from sqlalchemy.ext.declarative import declarative_base
 # 创建对象的基类:
 Base = declarative_base()
@@ -44,6 +44,9 @@ class OrderReceiptRecordDO(Base):
 	#拒收金额
 	rejectAmount=Column('reject_amount',Float,default=0)
 
+	#退货金额
+	refundAmount=Column('refund_amount',Float,default=0)
+
 	#应收金额
 	needReceiveAmount=Column('need_receive_amount',Float,default=0)
 
@@ -54,6 +57,6 @@ class OrderReceiptRecordDO(Base):
 	remainingAmount=Column('remaining_amount',Float,default=0)
 
 	#备注
-	memo=Column('memo',String(256),default='')
+	receiptMemo=Column('receipt_memo',String(256),default='')
 
 

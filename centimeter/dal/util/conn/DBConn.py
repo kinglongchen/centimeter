@@ -30,7 +30,7 @@ class DBConn():
 
     def conn(self):
         # 初始化数据库连接:
-        engine = create_engine(self.sqlScheme(),echo=True)
+        engine = create_engine(self.sqlScheme(),echo=False)
         # 创建DBSession类型:
         self.DBSession = sessionmaker(bind=engine)
         self.sessionClassList = []

@@ -84,6 +84,6 @@ class OrderReceiptDO(Base):
 	othersAmount=Column('others_amount',Float,default=0)
 
 	#备注
-	memo=Column('memo',String(256),default='')
+	receiptMemo=Column('receipt_memo',String(256),default='')
 
 

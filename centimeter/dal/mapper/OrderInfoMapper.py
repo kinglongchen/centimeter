@@ -19,3 +19,7 @@ class OrderInfoMapper(object):
 	def selectByOutOrderSnList(self, outOrderSnList):
 		return self.session.query(OrderInfoDO).filter(OrderInfoDO.isDeleted=='N')\
 			.filter(OrderInfoDO.orderSn.in_(outOrderSnList)).all()
+
+	def selectBatch(self, start, number):
+		return self.session.query(OrderInfoDO).order_by(OrderInfoDO.id)[start:start+number]
+
