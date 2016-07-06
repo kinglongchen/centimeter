@@ -21,6 +21,7 @@ from dal.mapper.SaleReturnExchangeBillEntryMapper import SaleReturnExchangeBillE
 from dal.mapper.SaleReturnExchangeBillMapper import SaleReturnExchangeBillMapper
 from facade.impl.OrderReceiptFacadeImpl import OrderReceiptFacadeImpl
 from server.domain.ReceiptInitParam import ReceiptInitParam
+from server.helper.ReceiptErrorLogTool import ReceiptErrorLogTool
 
 __author__ = 'chenjinlong'
 class Finance4ReceiptHelper():
@@ -122,6 +123,8 @@ class Finance4ReceiptHelper():
     returnGoodsBillEntryMapper = ReturnGoodsBillEntryMapper()
 
     refundBillMapper = RefundBillMapper()
+
+    receiptErrorLogTool = ReceiptErrorLogTool()
 
     def __init__(self):
         self.BATCH_NUMBER = 50
@@ -354,7 +357,8 @@ class Finance4ReceiptHelper():
 
         return orderReceipt4InsertList,receiptRecord4InsertList,errorOrderInfoList
 
-
+    def flushErrorInfo(self):
+        self.receiptErrorLogTool.flush()
 
 
     def doAssemble(self,receiptInitParam):
@@ -465,6 +469,7 @@ class Finance4ReceiptHelper():
             receiptRecord4ReceivedList = self.doFinanceReceipt4ExchangeOutStock(orderReceipt,receiptInitParam)
         elif receiptType == self.DO_NOTHING:
             print "订单orderId = %d匹配后不做任何应收初始化" %orderInfoDO.id
+            self.receiptErrorLogTool.write(orderInfoDO)
             return None,[]
         else:
             raise Exception("订单未知应收流程:orderId = " + orderInfoDO.id)

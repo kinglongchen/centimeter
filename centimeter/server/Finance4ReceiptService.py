@@ -61,6 +61,7 @@ class Finance4ReceiptService():
                 print "获取第%d到%d数据失败,程序停止!" %(start,start+self.BATCH_NUMBER)
                 break
         # 最后要保存一下出错的信息
+        self.finance4ReceiptHelper.flushErrorInfo()
         self.saveFailProcessInfo(self.retryOrderInfoSnList)
         print "历史脚本初始化完毕，处理总数total=%d" %total
         print receiptTypeMap
