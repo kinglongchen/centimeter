@@ -30,7 +30,7 @@ class Finance4ReceiptService():
         total = 0
         start = 0
         # orderInfoDOList = self.finance4ReceiptHelper.getProcessOrder(start,self.BATCH_NUMBER)
-        orderInfoDOList = self.finance4ReceiptHelper.getProcessOrderTest(["B16063098001004"])
+        orderInfoDOList = self.finance4ReceiptHelper.getProcessOrderTest(["B16070137601042"])
 
         receiptTypeMap = {}
         while orderInfoDOList != None:
