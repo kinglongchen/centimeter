@@ -5,13 +5,19 @@ import traceback
 from common.config import ReceiptConfig
 from dal.domain.do.OrderReceiptDO import OrderReceiptDO
 from dal.domain.do.OrderReceiptRecordDO import OrderReceiptRecordDO
+from dal.domain.do.SaleReturnExchangeBillEntryDO import  SaleReturnExchangeBillEntryDO
+from dal.domain.do.ReturnGoodsBillEntryDO import ReturnGoodsBillEntryDO
+
 from dal.mapper.OrderInfoMapper import OrderInfoMapper
 from dal.mapper.OrderReceiptMapper import OrderReceiptMapper
 from dal.mapper.OrderReceiptRecordMapper import OrderReceiptRecordMapper
 from dal.mapper.PayOrderItemMapper import PayOrderItemMapper
 from dal.mapper.PayOrderMapper import PayOrderMapper
+from dal.mapper.RefundBillMapper import RefundBillMapper
+from dal.mapper.ReturnGoodsBillEntryMapper import ReturnGoodsBillEntryMapper
 from dal.mapper.ReturnGoodsBillMapper import ReturnGoodsBillMapper
 from dal.mapper.ReturnOrderInfoMapper import ReturnOrderInfoMapper
+from dal.mapper.SaleReturnExchangeBillEntryMapper import SaleReturnExchangeBillEntryMapper
 from dal.mapper.SaleReturnExchangeBillMapper import SaleReturnExchangeBillMapper
 from facade.impl.OrderReceiptFacadeImpl import OrderReceiptFacadeImpl
 from server.domain.ReceiptInitParam import ReceiptInitParam
@@ -111,6 +117,12 @@ class Finance4ReceiptHelper():
 
     returnGoodsBillMapper = ReturnGoodsBillMapper()
 
+    saleReturnExchangeBillEntryMapper = SaleReturnExchangeBillEntryMapper()
+
+    returnGoodsBillEntryMapper = ReturnGoodsBillEntryMapper()
+
+    refundBillMapper = RefundBillMapper()
+
     def __init__(self):
         self.BATCH_NUMBER = 50
         self.fileInput = open("../output/receipt/retryfile.txt","w")
@@ -149,29 +161,81 @@ class Finance4ReceiptHelper():
 
     def getSaleReturnExchangeBillDict(self, outOrderSnList):
         saleReturnExcahgneBillDict = {}
+        saleReturnExchangeBillIdList = []
+        saleReturnExchangeBillNoList = []
         saleReturnExchangeBillDOList = self.saleReturnExchangeBillMapper.selectReturnGoods4PartReject(outOrderSnList)
 
         for saleReturnExchangeBillDO in saleReturnExchangeBillDOList:
-            entry = saleReturnExcahgneBillDict[saleReturnExchangeBillDO.mainBillNo]
+            saleReturnExchangeBillIdList.append(saleReturnExchangeBillDO.id)
+            saleReturnExchangeBillNoList.append(saleReturnExchangeBillDO.billNo)
+            entry = saleReturnExcahgneBillDict.get(saleReturnExchangeBillDO.mainBillNo,None)
             if entry is None:
                 entry = []
             entry.append(saleReturnExchangeBillDO)
             saleReturnExcahgneBillDict[saleReturnExchangeBillDO.mainBillNo] = entry
-        return saleReturnExcahgneBillDict
+        return saleReturnExcahgneBillDict,saleReturnExchangeBillIdList,saleReturnExchangeBillNoList
 
     def getReturnGoodsBillDict(self, outOrderSnList):
         returnGoodsBillDict = {}
+        returnGoodsBillIdList = []
+        returnGoodsBillNoList = []
         returnGoodsBillDOList = self.returnGoodsBillMapper.selectReturnGoodsInfo(outOrderSnList)
 
+
         for returnGoodsBillDO in returnGoodsBillDOList:
-            entry = returnGoodsBillDict[returnGoodsBillDO.mainBillNo]
+            entry = returnGoodsBillDict.get(returnGoodsBillDO.mainBillNo,None)
+            returnGoodsBillIdList.append(returnGoodsBillDO.id)
+            returnGoodsBillNoList.append(returnGoodsBillDO.billNo)
             if entry is None:
                 entry = []
             entry.append(returnGoodsBillDO)
             returnGoodsBillDict[returnGoodsBillDO.mainBillNo] = entry
-        return returnGoodsBillDict
+        return returnGoodsBillDict,returnGoodsBillIdList,returnGoodsBillNoList
+
+    def getSaleReturnExchangeBillEntryDict(self, saleReturnExchangeBillIdList):
+        if saleReturnExchangeBillIdList is None or len(saleReturnExchangeBillIdList) == 0:
+            return {}
+        saleReturnExchangeBillEntryDict = {}
+        saleReturnExchangeBillEntryDOList = self.saleReturnExchangeBillEntryMapper.selectByBillIdList(saleReturnExchangeBillIdList)
+
+
+        for saleReturnExchangeBillEntryDO in saleReturnExchangeBillEntryDOList:
+            entry = saleReturnExchangeBillEntryDict.get(saleReturnExchangeBillEntryDO.billId,[])
+            entry.append(saleReturnExchangeBillEntryDO)
+            saleReturnExchangeBillEntryDict[saleReturnExchangeBillEntryDO.billId] = entry
+
+        return saleReturnExchangeBillEntryDict
+
+
+
+    def getReturnGoodsBillEntryDict(self, returnGoodsBillIdList):
+        if returnGoodsBillIdList is None or len(returnGoodsBillIdList) == 0:
+            return {}
+        returnGoodsBillEntryDict = {}
+        returnGoodsBillEntryDOList = self.returnGoodsBillEntryMapper.selectByBillIdList(returnGoodsBillIdList)
+
+        for returnGoodsBillEntryDO in returnGoodsBillEntryDOList:
+            entry = returnGoodsBillEntryDict.get(returnGoodsBillEntryDO.billId,[])
+            entry.append(returnGoodsBillEntryDO)
+            returnGoodsBillEntryDict[returnGoodsBillEntryDO.billId] = entry
+
+        return returnGoodsBillEntryDict
+
+
+    def getRefundBillDict(self, billNoList):
+        refundBillDict = {}
+        refundBillDOList = self.refundBillMapper.selectByReturnGoodsBillNoList(billNoList)
+        for refundBillDO in refundBillDOList:
+            entry = refundBillDict.get(refundBillDO.returnGoodsBillNo,[])
+            entry.append(refundBillDO)
+            refundBillDict[refundBillDO.returnGoodsBillNo] = entry
+
+        return refundBillDict
 
     def getProcessOrderTest(self,orderSnList):
+        return self.orderInfoMapper.selectByOutOrderSnList(orderSnList)
+
+    def getProcessOrder4ErrorOrder(self,orderSnList):
         return self.orderInfoMapper.selectByOutOrderSnList(orderSnList)
 
     def getProcessOrder(self,start ,num):
@@ -183,18 +247,25 @@ class Finance4ReceiptHelper():
         if num == None:
             num = self.BATCH_NUMBER
 
-        orderInfoDOList = None
+
         orderInfoDOList = self.orderInfoMapper.selectBatch(start,num)
+        if len(orderInfoDOList)==0 or orderInfoDOList == None:
+            return None
+
+        orderInfoDOList = self.doFilterOrder(orderInfoDOList)
+        orderInfoDOList = self.doFilterOrder4Test(orderInfoDOList)
         return orderInfoDOList
 
-
     def batchDoProcessFinanceReceipt(self,orderInfoDOList):
-
+        if len(orderInfoDOList) == 0:
+            return []
         orderReceipt4InsertList,receiptRecord4InsertList,errorOrderInfoList = self.buildReceiptInfo(orderInfoDOList)
         self.orderReceiptFacade.doOrderReceiptDataInit(orderReceipt4InsertList,receiptRecord4InsertList)
         return errorOrderInfoList
 
     def batchDoProcessFinanceReceiptTest(self,orderInfoDOList,receiptTypeMap):
+        if len(orderInfoDOList) == 0:
+            return []
         orderReceipt4InsertList,receiptRecord4InsertList,errorOrderInfoList = self.buildReceiptInfo(orderInfoDOList)
         for orderReceiptRecord in receiptRecord4InsertList:
             key = orderReceiptRecord.receiptAction
@@ -220,8 +291,11 @@ class Finance4ReceiptHelper():
         payOrderItemDict = self.getPayOrderItemDict(payOrderIdList)
         # orderReceiptDict = self.initOrderReceiptInfo4Array(orderInfoDOList,payOrderDict,payOrderItemDict)
         returnOrderInfoDict = self.getReturnOrderInfoDict(outOrderSnList)
-        saleReturnExchangeBillDict = self.getSaleReturnExchangeBillDict(outOrderSnList)
-        returnGoodsBillDict = self.getReturnGoodsBillDict(outOrderSnList)
+        saleReturnExchangeBillDict,saleReturnExchangeBillIdList,saleReturnExchangeBillNoList = self.getSaleReturnExchangeBillDict(outOrderSnList)
+        saleReturnExchangeBillEntryDict = self.getSaleReturnExchangeBillEntryDict(saleReturnExchangeBillIdList)
+        returnGoodsBillDict,returnGoodsBillIdList,returnGoodsBillNoList = self.getReturnGoodsBillDict(outOrderSnList)
+        returnGoodsBillEntryDict = self.getReturnGoodsBillEntryDict(returnGoodsBillIdList)
+        refundBillDict = self.getRefundBillDict(returnGoodsBillNoList+saleReturnExchangeBillNoList)
 
         orderReceipt4InsertList = []
         receiptRecord4InsertList = []
@@ -237,13 +311,34 @@ class Finance4ReceiptHelper():
 
             receiptInitParam.returnOrderInfoDO = returnOrderInfoDO
 
-            saleReturnExchangeBillDOList = saleReturnExchangeBillDict.get(orderInfoDO.orderSn,None)
+            saleReturnExchangeBillDOList = saleReturnExchangeBillDict.get(orderInfoDO.orderSn,[])
 
             receiptInitParam.saleReturnExchangeDOList = saleReturnExchangeBillDOList
+            refundBillDOList = []
+            saleReturnExchangeBillEntryDOList = []
+            for saleReturnExchangeBillDO in saleReturnExchangeBillDOList:
 
-            returnGoodsBillDOList = returnGoodsBillDict.get(orderInfoDO.orderSn,None)
+                saleReturnExchangeBillEntryDOList += saleReturnExchangeBillEntryDict.get(saleReturnExchangeBillDO.id,[])
+                refundBillDOList += refundBillDict.get(saleReturnExchangeBillDO.billNo,[])
+
+            receiptInitParam.saleReturnExchangeBillEntryDOList = saleReturnExchangeBillEntryDOList
+
+
+            returnGoodsBillDOList = returnGoodsBillDict.get(orderInfoDO.orderSn,[])
 
             receiptInitParam.returnGoodsBillDOList = returnGoodsBillDOList
+
+            returnGoodsBillEntryDOList = []
+
+            for returnGoodsBillDO in returnGoodsBillDOList:
+                returnGoodsBillEntryDOList += returnGoodsBillEntryDict.get(returnGoodsBillDO.id,[])
+                refundBillDOList += refundBillDict.get(returnGoodsBillDO.billNo,[])
+
+            receiptInitParam.returnGoodsBillEntryDOList = returnGoodsBillEntryDOList
+            receiptInitParam.refundBillDOList = refundBillDOList
+
+
+
             try :
                 orderReceipt,receiptRecord4ReceiptList = self.doAssemble(receiptInitParam)
             except Exception:
@@ -293,7 +388,7 @@ class Finance4ReceiptHelper():
         elif receiptType == self.ONLINE_CANCEL_PROCESS:
             receiptRecord4ReceivedList = self.doOnlineReceipt4OnlineCancel(orderReceipt,receiptInitParam)
         elif receiptType == self.ONLINE_CANCEL_RETURN_PROCESS:
-            receiptRecord4ReceivedList = self.doOnline4CancelRefund(orderReceipt,receiptInitParam)
+            receiptRecord4ReceivedList = self.doOnlineReceipt4CancelRefund(orderReceipt,receiptInitParam)
         elif receiptType == self.ONLINE_OUT_STOCK_PROCESS:
             receiptRecord4ReceivedList = self.doOnlineSuccessReceipt(orderReceipt,receiptInitParam)
         elif receiptType == self.ONLINE_REJECT_PROCESS:
@@ -368,13 +463,15 @@ class Finance4ReceiptHelper():
 
         elif receiptType == self.EXCHANGE_OUTSTOCK_PROCESS:
             receiptRecord4ReceivedList = self.doFinanceReceipt4ExchangeOutStock(orderReceipt,receiptInitParam)
-
-
         elif receiptType == self.DO_NOTHING:
             print "订单orderId = %d匹配后不做任何应收初始化" %orderInfoDO.id
             return None,[]
         else:
             raise Exception("订单未知应收流程:orderId = " + orderInfoDO.id)
+
+        self.doReceipt4ReturnProcess(receiptRecord4ReceivedList,orderReceipt,receiptInitParam)
+
+
 
 
         return orderReceipt,receiptRecord4ReceivedList
@@ -403,14 +500,14 @@ class Finance4ReceiptHelper():
 
     # 线上支付在预收流程
     def doOnlineReceipt4OnlineReceived(self,orderReceipt,receiptInitParam):
-        self.checkReceipt4Online(orderReceipt,receiptInitParam)
+        # self.checkReceipt4Online(orderReceipt,receiptInitParam)
         receiptRecord4ReceivedList = []
         receiptRecord4ReceivedList.append(self.doOnline4Recevied(orderReceipt,receiptInitParam))
         return receiptRecord4ReceivedList
 
     # 线上支付在出库流程,其实隐含包含了财务确认收款
     def doOnlineSuccessReceipt(self,orderReceipt,receiptInitParam):
-        self.checkReceipt4Online(orderReceipt,receiptInitParam)
+        # self.checkReceipt4Online(orderReceipt,receiptInitParam)
         receiptRecord4ReceivedList = []
         receiptRecord4ReceivedList += self.doOnlineReceipt4OnlineReceived(orderReceipt,receiptInitParam)
         receiptRecord4ReceivedList.append(self.doOnline4OutStock(orderReceipt,receiptInitParam))
@@ -420,7 +517,7 @@ class Finance4ReceiptHelper():
 
     # 线上支付在取消路程
     def doOnlineReceipt4OnlineCancel(self,orderReceipt,receiptInitParam):
-        self.checkReceipt4Online(orderReceipt,receiptInitParam)
+        # self.checkReceipt4Online(orderReceipt,receiptInitParam)
         receiptRecord4ReceivedList = []
         receiptRecord4ReceivedList += self.doOnlineReceipt4OnlineReceived(orderReceipt,receiptInitParam)
         receiptRecord4ReceivedList.append(self.doOnline4Cancel(orderReceipt,receiptInitParam))
@@ -429,7 +526,7 @@ class Finance4ReceiptHelper():
 
     # 线上支付在订单取消的退款路程
     def doOnlineReceipt4CancelRefund(self,orderReceipt,receiptInitParam):
-        self.checkReceipt4Online(orderReceipt,receiptInitParam)
+        # self.checkReceipt4Online(orderReceipt,receiptInitParam)
         receiptRecord4ReceivedList = []
         receiptRecord4ReceivedList += self.doOnlineReceipt4OnlineCancel(orderReceipt,receiptInitParam)
         receiptRecord4ReceivedList.append(self.doOnline4CancelRefund(orderReceipt,receiptInitParam))
@@ -483,11 +580,13 @@ class Finance4ReceiptHelper():
         receiptRecord4ReceivedList += self.doOnlineReceipt4OnlineReceived(orderReceipt,receiptInitParam)
         receiptRecord4ReceivedList.append(self.do4MergeOrderOriInvalid(orderReceipt,receiptInitParam))
 
+        return receiptRecord4ReceivedList
+
     # 在线预收
     def doOnline4Recevied(self,orderReceipt,receiptInitParam):
         orderInfoDO = receiptInitParam.orderInfoDO
         receiptRecord = self.initOrderReceiptRecordDO(orderReceipt,receiptInitParam)
-        if orderInfoDO.parentId is not None and orderInfoDO.parentId>0:
+        if orderInfoDO.parentId is not None and orderInfoDO.parentId>0 and orderInfoDO.orderStatus!=-3:
             receiptRecord.receiptAction = 'split_order_child'
         else:
             receiptRecord.receiptAction = 'online_received'
@@ -499,6 +598,7 @@ class Finance4ReceiptHelper():
 
     # 在线出库
     def doOnline4OutStock(self,orderReceipt,receiptInitParam):
+
         orderInfoDO = receiptInitParam.orderInfoDO
         receiptRecord = self.initOrderReceiptRecordDO(orderReceipt,receiptInitParam)
         receiptRecord.receiptAction = 'out_stock'
@@ -578,6 +678,9 @@ class Finance4ReceiptHelper():
         receiptRecord.receiptAction = 'merge_order_ori_invalid'
         receiptRecord.hasReceivedAmount = 0-orderInfoDO.orderAmount
 
+        self.doProcessReceipt(orderReceipt,receiptRecord)
+        return receiptRecord
+
     # 取消订单
     def doOnline4Cancel(self,orderReceipt,receiptInitParam):
         orderInfoDO = receiptInitParam.orderInfoDO
@@ -609,7 +712,6 @@ class Finance4ReceiptHelper():
         return receiptRecord4ReceivedList
 
     # 货到付款现金支付财务确认收款流程
-
     def doCodCashReceipt4CodPaidConfirm(self,orderReceipt,receiptInitParam):
         receiptRecord4ReceivedList = []
         receiptRecord4ReceivedList += self.doCodCashReceipt4OutStock(orderReceipt,receiptInitParam)
@@ -658,7 +760,8 @@ class Finance4ReceiptHelper():
         orderInfoDO = receiptInitParam.orderInfoDO
         receiptRecord = self.initOrderReceiptRecordDO(orderReceipt,receiptInitParam)
         receiptRecord.receiptAction = 'cod_paid_confirm'
-        receiptRecord.hasReceivedAmount =orderInfoDO.orderAmount-orderInfoDO.returnAmount
+        receiptRecord.hasReceivedAmount =orderInfoDO.receiveAmount
+        # orderReceipt.hasReceivedCashAmount = orderInfoDO.receiveAmount
         self.doProcessReceipt(orderReceipt,receiptRecord)
 
         return receiptRecord
@@ -696,14 +799,16 @@ class Finance4ReceiptHelper():
     def doCodPosReceipt4PosPaid(self,orderReceipt,receiptInitParam):
         receiptRecord4ReceivedList = []
         receiptRecord4ReceivedList += self.doCodPosReceipt4CodOutStock(orderReceipt,receiptInitParam)
-        receiptRecord4ReceivedList.append(self.doCodPos4CodOutStock(orderReceipt,receiptInitParam))
+        # 历史数据问题，初始化时不计
+        receiptRecord4ReceivedList.append(self.doCodPos4PosPaidConfirm(orderReceipt,receiptInitParam))
+        # receiptRecord4ReceivedList.append(self.doCodPos4PosPaid(orderReceipt,receiptInitParam))
         return receiptRecord4ReceivedList
 
     # 货到付款POS支付 Pos部分支付流程
     def doCodPosReceipt4PartPaid(self,orderReceipt,receiptInitParam):
         receiptRecord4ReceivedList = []
         receiptRecord4ReceivedList += self.doCodPosReceipt4CodOutStock(orderReceipt,receiptInitParam)
-        receiptRecord4ReceivedList.append(self.doCodPos4PosPartPaid(orderReceipt,receiptInitParam))
+        # receiptRecord4ReceivedList.append(self.doCodPos4PosPartPaid(orderReceipt,receiptInitParam))
         return receiptRecord4ReceivedList
 
     # 货到付款POS支付 POS部分支付财务确认收款
@@ -713,18 +818,18 @@ class Finance4ReceiptHelper():
         receiptRecord4ReceivedList.append(self.doCodPos4PosPaidConfirm(orderReceipt,receiptInitParam))
         return receiptRecord4ReceivedList
 
-    # 货到付款POS支付 部分拒收
-    def doCodPosReceipt4PartReject(self,orderReceipt,receiptInitParam):
-        receiptRecord4ReceivedList = []
-        receiptRecord4ReceivedList += self.doCodPos4CodOutStock(orderReceipt,receiptInitParam)
-        receiptRecord4ReceivedList.append(self.doCodPos4CodPartReject(orderReceipt,receiptInitParam))
-        return receiptRecord4ReceivedList
-
     # 货到付款POS支付 部分支付
     def doCodPosReceipt4PartRejectPartPaid(self,orderReceipt,receiptInitParam):
         receiptRecord4ReceivedList = []
-        receiptRecord4ReceivedList += self.doCodPosReceipt4PartReject(orderReceipt,receiptInitParam)
+        receiptRecord4ReceivedList += self.doCodPosReceipt4CodOutStock(orderReceipt,receiptInitParam)
         receiptRecord4ReceivedList.append(self.doCodPos4PosPartPaid(orderReceipt,receiptInitParam))
+        return receiptRecord4ReceivedList
+
+    # 货到付款POS支付 部分拒收
+    def doCodPosReceipt4PartReject(self,orderReceipt,receiptInitParam):
+        receiptRecord4ReceivedList = []
+        receiptRecord4ReceivedList += self.doCodPosReceipt4PartRejectPartPaid(orderReceipt,receiptInitParam)
+        receiptRecord4ReceivedList.append(self.doCodPos4CodPartReject(orderReceipt,receiptInitParam))
         return receiptRecord4ReceivedList
 
     def doCodPosReceipt4PRPPConfirm(self,orderReceipt,receiptInitParam):
@@ -769,8 +874,9 @@ class Finance4ReceiptHelper():
     def doCodPos4PosPaidConfirm(self,orderReceipt,receiptInitParam):
         orderInfoDO = receiptInitParam.orderInfoDO
         receiptRecord = self.initOrderReceiptRecordDO(orderReceipt,receiptInitParam)
-        receiptRecord.receiptAction = 'cod_paid_confirm'
-        receiptRecord.hasReceivedAmount =orderInfoDO.receiveAmount-orderInfoDO.payFee
+        receiptRecord.receiptAction = 'pos_paid'
+        # receiptRecord.hasReceivedAmount =orderInfoDO.receiveAmount-orderInfoDO.payFee
+        receiptRecord.hasReceivedAmount =orderInfoDO.receiveAmount
         self.doProcessReceipt(orderReceipt,receiptRecord)
         return receiptRecord
 
@@ -947,7 +1053,7 @@ class Finance4ReceiptHelper():
     #金融订单 换货财务确认收款
     def doFinanceReceipt4ExchangePaidConfirm(self,orderReceipt,receiptInitParam):
         receiptRecord4ReceivedList = []
-        receiptRecord4ReceivedList += self.doFinance4ExchangeOutStock(orderReceipt,receiptInitParam)
+        receiptRecord4ReceivedList += self.doFinanceReceipt4ExchangeOutStock(orderReceipt,receiptInitParam)
         receiptRecord4ReceivedList.append(self.doFinance4ExchangePaidConfirm(orderReceipt,receiptInitParam))
         return receiptRecord4ReceivedList
 
@@ -972,9 +1078,13 @@ class Finance4ReceiptHelper():
 
     def initOrderReceiptRecordDO(self,orderReceipt,receiptInitParam):
         payOrderDO = receiptInitParam.payOrderDOList[0]
+        orderInfoDO = receiptInitParam.orderInfoDO
         receiptRecord = OrderReceiptRecordDO()
-        receiptRecord.gmtCreate = time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(time.time()))
-        receiptRecord.gmtModified = time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(time.time()))
+        receiptRecord.gmtCreate = orderInfoDO.gmtCreate
+        receiptRecord.creator = orderInfoDO.creator
+        receiptRecord.gmtModified = orderInfoDO.gmtCreate
+        receiptRecord.modifier = orderInfoDO.modifier
+        receiptRecord.financeAccountId = payOrderDO.financeAccountId
         receiptRecord.platformId = payOrderDO.platformId
         receiptRecord.platformName = payOrderDO.platformName
         receiptRecord.outOrderSn = payOrderDO.outOrderSn
@@ -991,15 +1101,16 @@ class Finance4ReceiptHelper():
         orderReceipt.rejectAmount = orderReceipt.rejectAmount+receiptRecord.rejectAmount
         orderReceipt.needReceiveAmount = orderReceipt.needReceiveAmount + receiptRecord.needReceiveAmount
         orderReceipt.hasReceivedAmount = orderReceipt.hasReceivedAmount + receiptRecord.hasReceivedAmount
-        orderReceipt.remainingAmount = orderReceipt.needReceiveAmount + orderReceipt.needReceiveAmount
+        orderReceipt.refundAmount = orderReceipt.refundAmount+receiptRecord.refundAmount
+        orderReceipt.remainingAmount = orderReceipt.needReceiveAmount - orderReceipt.hasReceivedAmount
         receiptRecord.remainingAmount = orderReceipt.remainingAmount
 
     def checkReceipt4Online(self,orderReceipt,receiptInitParam):
         orderInfoDO = receiptInitParam.orderInfoDO
         if receiptInitParam.payOrderDOList == None or len(receiptInitParam.payOrderDOList)!=1:
-            raise Exception("在上支付预收流水,其支付订单数量必须为1,orderId="+orderInfoDO.id)
+            raise Exception("在上支付预收流水,其支付订单数量必须为1,orderId="+str(orderInfoDO.id))
         payOrderDO = receiptInitParam.payOrderDOList[0]
-        payOrderItemDOList = receiptInitParam.payOrderItemDict[payOrderDO.id]
+        payOrderItemDOList = receiptInitParam.payOrderItemDict.get(payOrderDO.id,None)
         if payOrderItemDOList == None or len(payOrderItemDOList)!=1:
             raise Exception("在上支付预收流水,其支付订单数量必须为1,orderId="+orderInfoDO.id)
 
@@ -1039,23 +1150,6 @@ class Finance4ReceiptHelper():
 
             if orderInfoDO.deliveryNo is not None and orderInfoDO.deliveryNo.strip()!="":
                 if orderInfoDO.returnAmount is not None and orderInfoDO.returnAmount > 0:
-                    if returnOrderInfoDO is not None and returnOrderInfoDO.haveRefund == 1:
-                        haveReturn = False
-                        if saleReturnExchangeDOList is not None and len(saleReturnExchangeDOList)>0:
-                            haveReturn = True
-
-                            for saleReturnExchangeDO in saleReturnExchangeDOList:
-                                if saleReturnExchangeDO.haveRefund == 1:
-                                    return self.RETURN_GOODS_REFUND_PROCESS
-
-                        if returnGoodsBillDOList is not None and len(returnGoodsBillDOList)>0:
-                            haveReturn = True
-                            for returnGoodsBillDO in returnGoodsBillDOList:
-                                if returnGoodsBillDO.haveRefund == 1:
-                                    return self.RETURN_GOODS_RERUND_PROCESS
-                        if haveReturn:
-                            return self.RETURN_GOODS_PROCESS
-                        return self.ONLINE_REJECT_REFUND_PROCESS
                     return self.ONLINE_REJECT_PROCESS
                 return self.ONLINE_OUT_STOCK_PROCESS
 
@@ -1071,23 +1165,23 @@ class Finance4ReceiptHelper():
         saleReturnExchangeDOList = receiptInitParam.saleReturnExchangeDOList
         returnGoodsBillDOList = receiptInitParam.returnGoodsBillDOList
 
+        #if orderInfoDO.deliveryNo is not None and orderInfoDO.deliveryNo.strip()!="":
+        if orderInfoDO.tradeStatus == "DDJS":
+            return self.COD_CASH_ALL_REJECT_PROCESS
+        if orderInfoDO.returnAmount is not None and orderInfoDO.returnAmount >0 and orderInfoDO.returnAmount != orderInfoDO.orderAmount:
+            if orderInfoDO.tradeStatus == "CWQRSK" or self.isDDTHOrder(receiptInitParam):
+                return self.COD_CASH_PART_REJECT_PAID_CONFIRM_PROCESS
+            return self.COD_CASH_PART_REJECT_PROCESS
+
+        # if orderInfoDO.receiveAmount is not None and orderInfoDO.receiveAmount == orderInfoDO.orderAmount:
+        if orderInfoDO.tradeStatus == "CWQRSK" or self.isDDTHOrder(receiptInitParam):
+            return self.COD_CASH_PAID_CONFIRM_PROCESS
+
         if orderInfoDO.deliveryNo is not None and orderInfoDO.deliveryNo.strip()!="":
-            if orderInfoDO.tradeStatus == "DDJS":
-                return self.COD_CASH_ALL_REJECT_PROCESS
-
-            if orderInfoDO.returnAmount is not None and orderInfoDO.returnAmount >0 and orderInfoDO.returnAmount != orderInfoDO.orderAmount:
-                if orderInfoDO.tradeStatus == "CWQRSK":
-                    return self.COD_CASH_PART_REJECT_PAID_CONFIRM_PROCESS
-                return self.COD_CASH_PART_REJECT_PROCESS
-
-            if orderInfoDO.receiveAmount is not None and orderInfoDO.receiveAmount == orderInfoDO.orderAmount:
-                return self.COD_CASH_PAID_CONFIRM_PROCESS
-
             if (orderInfoDO.returnAmount is None or orderInfoDO.returnAmount==0) and (orderInfoDO.receiveAmount is None or orderInfoDO.receiveAmount == 0):
                 return self.COD_OUT_STOCK_PROCESS
-
-            #异常订单要记一下
-            raise Exception("异常订单,orderId = "+orderInfoDO.id)
+        #异常订单要记一下
+        # raise Exception("异常订单,orderId = "+orderInfoDO.id)
 
         return self.DO_NOTHING
 
@@ -1099,32 +1193,39 @@ class Finance4ReceiptHelper():
         saleReturnExchangeDOList = receiptInitParam.saleReturnExchangeDOList
         returnGoodsBillDOList = receiptInitParam.returnGoodsBillDOList
 
-        if orderInfoDO.deliveryNo is not None and orderInfoDO.deliveryNo.strip()!="":
-            if orderInfoDO.payFee is not None and orderInfoDO.payFee>0 and orderInfoDO.payFee == orderInfoDO.orderAmount:
-                return self.COD_POS_PAID_PROCESS
+        if self.isOutStockOrder(orderInfoDO) :
+
 
             if orderInfoDO.returnAmount is not None and orderInfoDO.returnAmount>0:
-                if orderInfoDO.payFee is not None and orderInfoDO.payFee > 0:
-                    if orderInfoDO.tradeStatus == "CWQRSK":
+                # if orderInfoDO.payFee is not None and orderInfoDO.payFee > 0:
+                if orderInfoDO.payStatus==2:
+                    if orderInfoDO.tradeStatus == "CWQRSK" or self.isDDTHOrder(receiptInitParam):
                         return self.COD_POS_PART_REJECT_PAID_CONFIRM_PROCESS
                     return self.COD_POS_PART_REJECT_PART_PAID_PROCESS
 
                 return self.COD_POS_PART_REJECT_PROCESS
 
             if orderInfoDO.payFee is not None and orderInfoDO.payFee!=0 and orderInfoDO.payFee != orderInfoDO.orderAmount:
-                if orderInfoDO.tradeStatus == "CWQRSK":
+                if orderInfoDO.tradeStatus == "CWQRSK" or self.isDDTHOrder(receiptInitParam):
                     return self.COD_POS_PART_PAID_CONFRIM_PROCESS
 
                 return self.COD_POS_PART_PAID_PROCESS
 
-            if (orderInfoDO.payFee is None or orderInfoDO.payFee == 0) and (orderInfoDO.returnAmount is None or orderInfoDO.returnAmount == 0):
+            # if orderInfoDO.payFee is not None and orderInfoDO.payFee>0 and orderInfoDO.payFee == orderInfoDO.orderAmount:
+            if orderInfoDO.tradeStatus == "CWQRSK" or self.isDDTHOrder(receiptInitParam):
+                return self.COD_POS_PAID_PROCESS
 
-                return self.COD_POS_OUT_STOCK_PROCESS
+            # if (orderInfoDO.payFee is None or orderInfoDO.payFee == 0) and (orderInfoDO.returnAmount is None or orderInfoDO.returnAmount == 0):
+
+            return self.COD_POS_OUT_STOCK_PROCESS
 
             #异常订单要记一下
-            raise Exception("异常订单,orderId = "+orderInfoDO.id)
+            # raise Exception("异常订单,orderId = "+str(orderInfoDO.id))
 
         return self.DO_NOTHING
+
+    def isOutStockOrder(self, orderInfoDO):
+        return (orderInfoDO.deliveryNo is not None and orderInfoDO.deliveryNo.strip()!="") or orderInfoDO.outWareTime is not None
 
     def receiptTypeJuge4ExchangeOrder(self, receiptInitParam):
         orderInfoDO = receiptInitParam.orderInfoDO
@@ -1132,7 +1233,7 @@ class Finance4ReceiptHelper():
         saleReturnExchangeDOList = receiptInitParam.saleReturnExchangeDOList
         returnGoodsBillDOList = receiptInitParam.returnGoodsBillDOList
         if orderInfoDO.deliveryNo is not None and orderInfoDO.deliveryNo.strip()!="":
-            if orderInfoDO.tradeStatus == "CWQRSK":
+            if orderInfoDO.tradeStatus == "CWQRSK" or self.isDDTHOrder(receiptInitParam):
                 return self.EXCHANGE_PAID_CONFIRM_PROCESS
             return self.EXCHANGE_OUTSTOCK_PROCESS
 
@@ -1146,36 +1247,18 @@ class Finance4ReceiptHelper():
         returnGoodsBillDOList = receiptInitParam.returnGoodsBillDOList
 
 
-        if (orderInfoDO.deliveryNo is None or orderInfoDO.deliveryNo.strip=="") and orderInfoDO.tradeStatus == "CWQRSK":
+        if (orderInfoDO.deliveryNo is None or orderInfoDO.deliveryNo.strip=="") and (orderInfoDO.tradeStatus == "CWQRSK" or self.isDDTHOrder(receiptInitParam)):
             if orderInfoDO.tradeStatus == "FDSX":
                 return self.FINANCE_SPLIT_ORI_INVALID_PROCESS
             if orderInfoDO.parentId is not None and orderInfoDO.parentId>0:
                 return self.FINANCE_SPLIT_CHILED_ORDER_PROCESS
             return self.FINANCE_CONFIRMED_NO_OUTSTOCK_PROCESS
 
-        if (orderInfoDO.deliveryNo is not None and orderInfoDO.deliveryNo.strip!="") and orderInfoDO.tradeStatus != "CWQRSK":
+        if (orderInfoDO.deliveryNo is not None and orderInfoDO.deliveryNo.strip!="") and (orderInfoDO.tradeStatus != "CWQRSK" and not self.isDDTHOrder(receiptInitParam)):
             return self.FINANCE_CONFIRMED_RECEIVED_OUT_STOCK_PROCESS
 
-        if (orderInfoDO.deliveryNo is not None and orderInfoDO.deliveryNo.strip!="") and orderInfoDO.tradeStatus == "CWQRSK":
-            haveReturn = False
-            if saleReturnExchangeDOList is not None and len(saleReturnExchangeDOList)>0:
-                haveReturn = True
-                for saleReturnExchangeDO in saleReturnExchangeDOList:
-                    if saleReturnExchangeDO.haveRefund == 1:
-                        if self.__isSplitChildOrder(orderInfoDO):
-                            return self.FINANCE_SPLIT_NEW_ORDER_RETURN_GOODS_REFUND_PROCESS
-                        return self.FINANCE_COMMON_RETURN_GOODS_REFUND_PROCESS
-            if returnGoodsBillDOList is not None and len(returnGoodsBillDOList)>0:
-                haveReturn = True
-                for returnGoodsBillDO in returnGoodsBillDOList:
-                    if returnGoodsBillDO.haveRefund == 1:
-                        if self.__isSplitChildOrder(orderInfoDO):
-                            return self.FINANCE_SPLIT_NEW_ORDER_RETURN_GOODS_REFUND_PROCESS
-                        return self.FINANCE_COMMON_RETURN_GOODS_REFUND_PROCESS
-            if haveReturn:
-                if self.__isSplitChildOrder(orderInfoDO):
-                    return self.FINANCE_SPLIT_NEW_ORDER_RETURN_GOODS_PROCESS
-                return self.FINANCE_COMMON_RETURN_GOODS_PROCESS
+        if (orderInfoDO.deliveryNo is not None and orderInfoDO.deliveryNo.strip!="") and (orderInfoDO.tradeStatus == "CWQRSK" or self.isDDTHOrder(receiptInitParam)):
+
             if self.__isSplitChildOrder(orderInfoDO):
                 return self.FINANCE_SPLIT_CHILD_ORDER_OUTSTOCK_PROCESS
             return self.FINANCE_CONFIRMED_RECEIVED_OUTSTOCK_PROCESS
@@ -1195,14 +1278,16 @@ class Finance4ReceiptHelper():
         orderReceipt =  OrderReceiptDO()
         # orderInfoDO = OrderInfoDO()
         # payOrderItem = PayOrderItemDO()
-        orderReceipt.gmtCreate = time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(time.time()))
-        orderReceipt.gmtModified = time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(time.time()))
+        orderReceipt.gmtCreate = orderInfoDO.gmtCreate
+        orderReceipt.creator = orderInfoDO.creator
+        orderReceipt.gmtModified = orderInfoDO.gmtCreate
+        orderReceipt.modifier = orderInfoDO.modifier
         orderReceipt.financeAccountId = stdPayOrderDO.financeAccountId
         orderReceipt.platformId = stdPayOrderDO.platformId
         orderReceipt.platformName = stdPayOrderDO.platformName
         orderReceipt.outOrderSn = orderInfoDO.orderSn
         orderReceipt.payId = orderInfoDO.payId
-        orderReceipt.orderAmount = receiptInitParam.orderInfoDO.orderAmount
+        orderReceipt.orderAmount = orderInfoDO.orderAmount
 
         orderReceipt.rejectAmount=0
         orderReceipt.refundAmount=0
@@ -1215,9 +1300,147 @@ class Finance4ReceiptHelper():
         orderReceipt.taxAmount=0
         orderReceipt.loansAmount=0
         orderReceipt.othersAmount=0
-        orderReceipt.receiptMemo=0
 
         return orderReceipt
 
     def __isSplitChildOrder(self,orderInfoDO):
         return orderInfoDO.parentId is not None and orderInfoDO.parentId>0
+
+    def doFilterOrder(self, orderInfoDOList):
+        newOrderInfoDOList = []
+        for orderInfoDO in orderInfoDOList:
+            if not self.isFDSXOrderNotPaid(orderInfoDO)\
+                and not self.isHDSXORderNotPaid(orderInfoDO)\
+                    and not self.isXEQRCod(orderInfoDO):
+                newOrderInfoDOList.append(orderInfoDO)
+
+        return newOrderInfoDOList
+
+
+    def isFDSXOrderNotPaid(self, orderInfoDO):
+        return orderInfoDO.payStatus<2 and orderInfoDO.tradeStatus=="FDSX"
+
+    def isHDSXORderNotPaid(self, orderInfoDO):
+        return orderInfoDO.payStatus<2 and orderInfoDO.tradeStatus=="HDSX"
+
+    def isXEQRCod(self, orderInfoDO):
+        return orderInfoDO.payId==3 and orderInfoDO.tradeStatus=="XEQR"
+
+    def doFilterOrder4Test(self, orderInfoDOList):
+        newOrderInfoDOList = []
+        for orderInfoDO in orderInfoDOList:
+            if not self.isDDJSOrder4Test(orderInfoDO) \
+                    and not self.isDDTHOrder4Test(orderInfoDO):
+                newOrderInfoDOList.append(orderInfoDO)
+
+        return newOrderInfoDOList
+
+    def isDDJSOrder4Test(self, orderInfoDO):
+        return orderInfoDO.tradeStatus == "DDJS"
+
+    def isDDTHOrder4Test(self, orderInfoDO):
+        return orderInfoDO.tradeStatus == "DDTH"
+
+    def doReceipt4ReturnProcess(self, receiptRecord4ReceivedList, orderReceipt, receiptInitParam):
+        orderInfoDO = receiptInitParam.orderInfoDO
+        # returnOrderInfoDO = receiptInitParam.returnOrderInfoDO
+        saleReturnExchangeDOList = receiptInitParam.saleReturnExchangeDOList
+        returnGoodsBillDOList = receiptInitParam.returnGoodsBillDOList
+        saleReturnExchangeEntryDOList = receiptInitParam.saleReturnExchangeBillEntryDOList
+        returnGoodsBillEntryDOList = receiptInitParam.returnGoodsBillEntryDOList
+        refundBillDOList = receiptInitParam.refundBillDOList
+
+        if refundBillDOList is not None and len(refundBillDOList)!=0:
+            receiptRecord4ReceivedList += self.doCommonReceipt4RefundGoodsRefund(orderReceipt,receiptInitParam)
+            return
+
+        if (saleReturnExchangeDOList is not None and len(saleReturnExchangeDOList)!=0) \
+            and (returnGoodsBillEntryDOList is not None and len(returnGoodsBillEntryDOList)!=0):
+            receiptRecord4ReceivedList +=self.doCommonReceipt4RefundGoods(orderReceipt,receiptInitParam)
+
+    def doCommonReceipt4RefundGoods(self,orderReceipt,receiptInitParam):
+        receiptRecord4ReceivedList = []
+        receiptRecord4ReceivedList.append(self.doCommon4ReturnGoods(orderReceipt,receiptInitParam))
+        return receiptRecord4ReceivedList
+
+    def doCommonReceipt4RefundGoodsRefund(self,orderReceipt,receiptInitParam):
+        receiptRecord4ReceivedList = []
+        receiptRecord4ReceivedList += self.doCommonReceipt4RefundGoods(orderReceipt,receiptInitParam)
+        receiptRecord4ReceivedList.append(self.doCommon4ReturnGoodsRefund(orderReceipt,receiptInitParam))
+        return receiptRecord4ReceivedList
+
+    # 退货
+    def doCommon4ReturnGoods(self,orderReceipt,receiptInitParam):
+        orderInfoDO = receiptInitParam.orderInfoDO
+        saleReturnExchangeDOList = receiptInitParam.saleReturnExchangeDOList
+        returnGoodsBillDOList = receiptInitParam.returnGoodsBillDOList
+        saleReturnExchangeEntryDOList = receiptInitParam.saleReturnExchangeBillEntryDOList
+        returnGoodsBillEntryDOList = receiptInitParam.returnGoodsBillEntryDOList
+        refundBillDOList = receiptInitParam.refundBillDOList
+        returnGoodsAmount = self.calReturnGoodsAmount(receiptInitParam)
+        receiptRecord = self.initOrderReceiptRecordDO(orderReceipt,receiptInitParam)
+        if (orderInfoDO.payId in self.FINANCE_PAY_TYPE_LIST):
+            receiptRecord.receiptAction = 'finance_return_goods'
+        else:
+            receiptRecord.receiptAction = 'return_goods'
+        receiptRecord.needReceiveAmount = 0-returnGoodsAmount
+        self.doProcessReceipt(orderReceipt,receiptRecord)
+        return receiptRecord
+
+    #  退货退款
+    def doCommon4ReturnGoodsRefund(self,orderReceipt,receiptInitParam):
+        orderInfoDO = receiptInitParam.orderInfoDO
+        receiptRecord = self.initOrderReceiptRecordDO(orderReceipt,receiptInitParam)
+        returnGoodsRefundAmount = self.calReturnGoodsRefundAmount(receiptInitParam)
+        if (orderInfoDO.payId in self.FINANCE_PAY_TYPE_LIST):
+            receiptRecord.receiptAction = 'finance_return_goods_refund'
+        else:
+            receiptRecord.receiptAction = 'return_goods_refund'
+        receiptRecord.hasReceivedAmount = 0-returnGoodsRefundAmount
+        receiptRecord.refundAmount = returnGoodsRefundAmount
+        self.doProcessReceipt(orderReceipt,receiptRecord)
+        return receiptRecord
+
+    def calReturnGoodsAmount(self, receiptInitParam):
+        saleReturnExchangeDOList = receiptInitParam.saleReturnExchangeDOList
+        returnGoodsBillDOList = receiptInitParam.returnGoodsBillDOList
+        saleReturnExchangeEntryDOList = receiptInitParam.saleReturnExchangeBillEntryDOList
+        returnGoodsBillEntryDOList = receiptInitParam.returnGoodsBillEntryDOList
+        refundBillDOList = receiptInitParam.refundBillDOList
+
+        returnGoodsAmount = 0
+        for saleReturnExchangeEntryDO in saleReturnExchangeEntryDOList:
+            # saleReturnExchangeEntryDO = SaleReturnExchangeBillEntryDO()
+
+            returnGoodsAmount += saleReturnExchangeEntryDO.returnQty*saleReturnExchangeEntryDO.returnPrice
+
+
+        return returnGoodsAmount
+
+    def calReturnGoodsRefundAmount(self,receiptInitParam):
+        saleReturnExchangeDOList = receiptInitParam.saleReturnExchangeDOList
+        returnGoodsBillDOList = receiptInitParam.returnGoodsBillDOList
+        saleReturnExchangeEntryDOList = receiptInitParam.saleReturnExchangeBillEntryDOList
+        returnGoodsBillEntryDOList = receiptInitParam.returnGoodsBillEntryDOList
+        refundBillDOList = receiptInitParam.refundBillDOList
+
+        returnGoodsRefundAmount = 0
+
+        for refundBillDO in refundBillDOList:
+            returnGoodsRefundAmount += refundBillDO.realReturnAmount
+
+        return returnGoodsRefundAmount
+
+
+    def isDDTHOrder(self,receiptInitParam):
+        saleReturnExchangeDOList = receiptInitParam.saleReturnExchangeDOList
+        returnGoodsBillDOList = receiptInitParam.returnGoodsBillDOList
+        saleReturnExchangeEntryDOList = receiptInitParam.saleReturnExchangeBillEntryDOList
+        returnGoodsBillEntryDOList = receiptInitParam.returnGoodsBillEntryDOList
+        refundBillDOList = receiptInitParam.refundBillDOList
+
+        return saleReturnExchangeDOList is not None and len(saleReturnExchangeDOList)!=0
+
+
+
+

@@ -2,6 +2,7 @@
 #初始化配置参数
 import time
 from common.config.Config import Config
+from common.util.SShTunnel import SSHTunnel
 
 Config.initConf()
 from facade.impl.OrderReceiptFacadeImpl import OrderReceiptFacadeImpl
@@ -33,10 +34,12 @@ __author__ = 'chenjinlong'
     # print len(payOrderList)
 
 @MySqlConn.dbWrapper
+@SSHTunnel.sshWrapper
 def doOrderReceiptBiz():
     start = time.time()
     finance4ReceiptService = Finance4ReceiptService()
     finance4ReceiptService.doFinanceReceiptDataInit()
+    # finance4ReceiptService.doFinanceReceiptData4ErrorOrder()
     end = time.time()
     print "用时:%ds" %(end-start)
 

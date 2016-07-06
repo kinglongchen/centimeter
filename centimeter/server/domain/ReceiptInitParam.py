@@ -6,3 +6,6 @@ class ReceiptInitParam():
     returnOrderInfoDO = None
     saleReturnExchangeDOList = None
     returnGoodsBillDOList = None
+    returnGoodsBillEntryDOList = None
+    refundBillDOList = None
+    saleReturnExchangeBillEntryDOList = None

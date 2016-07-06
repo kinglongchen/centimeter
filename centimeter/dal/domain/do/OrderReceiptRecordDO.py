@@ -39,7 +39,7 @@ class OrderReceiptRecordDO(Base):
 	outOrderSn=Column('out_order_sn',String(50),default='')
 
 	#动作
-	action=Column('action',String(50),default='')
+	receiptAction=Column('receipt_action',String(50),default='')
 
 	#拒收金额
 	rejectAmount=Column('reject_amount',Float,default=0)
