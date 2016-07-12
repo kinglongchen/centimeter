@@ -24,3 +24,8 @@ class OrderReceiptRecordMapper(object):
 	def batchInsert(self, orderReceiptRecord4InsertList,session):
 		rs = session.add_all(orderReceiptRecord4InsertList)
 		return rs
+
+	def batchInsert2(self, orderReceiptRecord4InsertList,session):
+		if session is None :
+			session = self.session
+		session.execute(OrderReceiptRecordDO.__table__.insert(),[value.toInsertDict() for value in orderReceiptRecord4InsertList])

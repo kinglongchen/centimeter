@@ -3,6 +3,7 @@
 import time
 from common.config.Config import Config
 from common.util.SShTunnel import SSHTunnel
+from dal.mapper.OrderReceiptMapper import OrderReceiptMapper
 
 Config.initConf()
 from facade.impl.OrderReceiptFacadeImpl import OrderReceiptFacadeImpl
@@ -39,6 +40,27 @@ def doOrderReceiptBiz():
     start = time.time()
     finance4ReceiptService = Finance4ReceiptService()
     finance4ReceiptService.doFinanceReceiptDataInit()
+    # finance4ReceiptService.doFinanceReceiptData4ErrorOrder()
+    end = time.time()
+    print "用时:%ds" %(end-start)
+
+
+@MySqlConn.dbWrapper
+@SSHTunnel.sshWrapper
+def test():
+    start = time.time()
+    orderReceiptMapper = OrderReceiptMapper()
+    orderReceiptDO = orderReceiptMapper.selectByPrimaryKey(133)
+
+    # print orderReceiptDO.__table__
+    orderReceiptDO.id = 1331
+    orderReceiptDO.outOrderSn = "B17050109001001"
+    print orderReceiptDO.toInsertDict()
+    orderReceiptDOList = []
+    orderReceiptDOList.append(orderReceiptDO)
+    orderReceiptFacade = OrderReceiptFacadeImpl()
+    orderReceiptFacade.doOrderReceiptBatchInit2(orderReceiptDOList)
+
     # finance4ReceiptService.doFinanceReceiptData4ErrorOrder()
     end = time.time()
     print "用时:%ds" %(end-start)

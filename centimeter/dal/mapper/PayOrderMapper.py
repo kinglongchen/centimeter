@@ -21,4 +21,4 @@ class PayOrderMapper(object):
 
 	def selectByOutOrderSnList(self, outOrderSnList):
 		return self.session.query(PayOrderDO).filter(PayOrderDO.isDeleted=='N') \
-			.filter(PayOrderDO.outOrderSn.in_(outOrderSnList)).filter(PayOrderDO.orderType==1).all()
+			.filter(PayOrderDO.outOrderSn.in_(outOrderSnList)).filter(PayOrderDO.orderType.in_([1,3])).all()

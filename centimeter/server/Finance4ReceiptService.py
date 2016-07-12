@@ -16,7 +16,7 @@ class Finance4ReceiptService():
 
     RETRY_ID_CAPACITY = 100
 
-    TEST_ORDER_LIMIT = 200000
+    TEST_ORDER_LIMIT = 5000
 
     IS_SWITCH = False
 
@@ -30,7 +30,7 @@ class Finance4ReceiptService():
         total = 0
         start = 0
         # orderInfoDOList = self.finance4ReceiptHelper.getProcessOrder(start,self.BATCH_NUMBER)
-        orderInfoDOList = self.finance4ReceiptHelper.getProcessOrderTest(["B16070137601042"])
+        orderInfoDOList = self.finance4ReceiptHelper.getProcessOrderTest(["B14121517001073","B15020811001026","B15022707001038","B15031301001008","B15032307001013","B15041401401019","B15041415001036"])
 
         receiptTypeMap = {}
         while orderInfoDOList != None:
@@ -82,8 +82,8 @@ class Finance4ReceiptService():
             orderInfoDOList = self.finance4ReceiptHelper.getProcessOrder4ErrorOrder(newOrderSnList)
 
             try:
-                # self.finance4ReceiptHelper.batchDoProcessFinanceReceipt(orderInfoDOList)
-                errorOrderInfoList = self.finance4ReceiptHelper.batchDoProcessFinanceReceiptTest(orderInfoDOList,receiptTypeMap)
+                errorOrderInfoList = self.finance4ReceiptHelper.batchDoProcessFinanceReceipt(orderInfoDOList)
+                # errorOrderInfoList = self.finance4ReceiptHelper.batchDoProcessFinanceReceiptTest(orderInfoDOList,receiptTypeMap)
                 if errorOrderInfoList:
                     print "异常订单数:%d" %(len(errorOrderInfoList))
                     self.doRetryProcess(errorOrderInfoList)
@@ -98,6 +98,8 @@ class Finance4ReceiptService():
             line = fileInput.readline()
 
         # 最后要保存一下出错的信息
+        self.finance4ReceiptHelper.flushErrorInfo()
+
         self.saveFailProcessInfo(self.retryOrderInfoSnList)
         print "出错的初始化完毕，处理总数total=%d" %total
         print receiptTypeMap

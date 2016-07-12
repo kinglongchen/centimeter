@@ -39,3 +39,8 @@ class OrderReceiptMapper(object):
 
 		return updateDict
 
+	def batchInsert2(self, orderReceiptDOList,session):
+		if session is None:
+			session = self.session
+		session.execute(OrderReceiptDO.__table__.insert(),[value.toInsertDict() for value in orderReceiptDOList])
+

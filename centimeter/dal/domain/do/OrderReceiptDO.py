@@ -87,3 +87,7 @@ class OrderReceiptDO(Base):
 	receiptMemo=Column('receipt_memo',String(256),default='')
 
 
+	def toInsertDict(self):
+		# return {self.__class__.__dict__.get(key).name:self.__dict__.get(key,None) for key in self.__dict__ if key[0:1] != "_"}
+		return {self.__class__.__dict__.get(key).name:self.__dict__.get(key,None) for key in self.__class__.__dict__ if key[0:1] != "_" and self.__dict__.get(key,None) is not None }
+

@@ -226,6 +226,8 @@ class Finance4ReceiptHelper():
 
 
     def getRefundBillDict(self, billNoList):
+        if billNoList is None or len(billNoList) == 0:
+            return {}
         refundBillDict = {}
         refundBillDOList = self.refundBillMapper.selectByReturnGoodsBillNoList(billNoList)
         for refundBillDO in refundBillDOList:
@@ -256,7 +258,7 @@ class Finance4ReceiptHelper():
             return None
 
         orderInfoDOList = self.doFilterOrder(orderInfoDOList)
-        orderInfoDOList = self.doFilterOrder4Test(orderInfoDOList)
+        # orderInfoDOList = self.doFilterOrder4Test(orderInfoDOList)
         return orderInfoDOList
 
     def batchDoProcessFinanceReceipt(self,orderInfoDOList):
@@ -381,7 +383,8 @@ class Finance4ReceiptHelper():
 
         receiptType = self.receiptTypeJuge(receiptInitParam)
 
-        print "匹配应收动作:%s," %(receiptType),"orderSn="+orderInfoDO.orderSn
+        if ReceiptConfig.isDebug:
+            print "匹配应收动作:%s," %(receiptType),"orderSn="+orderInfoDO.orderSn
 
 
         if receiptType == self.ONLINE_RECEIVED_PROCESS:
@@ -765,7 +768,7 @@ class Finance4ReceiptHelper():
         orderInfoDO = receiptInitParam.orderInfoDO
         receiptRecord = self.initOrderReceiptRecordDO(orderReceipt,receiptInitParam)
         receiptRecord.receiptAction = 'cod_paid_confirm'
-        receiptRecord.hasReceivedAmount =orderInfoDO.receiveAmount
+        receiptRecord.hasReceivedAmount =orderInfoDO.receiveAmount if orderInfoDO.receiveAmount is not None else 0
         # orderReceipt.hasReceivedCashAmount = orderInfoDO.receiveAmount
         self.doProcessReceipt(orderReceipt,receiptRecord)
 
@@ -881,7 +884,7 @@ class Finance4ReceiptHelper():
         receiptRecord = self.initOrderReceiptRecordDO(orderReceipt,receiptInitParam)
         receiptRecord.receiptAction = 'pos_paid'
         # receiptRecord.hasReceivedAmount =orderInfoDO.receiveAmount-orderInfoDO.payFee
-        receiptRecord.hasReceivedAmount =orderInfoDO.receiveAmount
+        receiptRecord.hasReceivedAmount =orderInfoDO.receiveAmount if orderInfoDO.receiveAmount is not None else 0
         self.doProcessReceipt(orderReceipt,receiptRecord)
         return receiptRecord
 
@@ -1183,7 +1186,7 @@ class Finance4ReceiptHelper():
             return self.COD_CASH_PAID_CONFIRM_PROCESS
 
         if orderInfoDO.deliveryNo is not None and orderInfoDO.deliveryNo.strip()!="":
-            if (orderInfoDO.returnAmount is None or orderInfoDO.returnAmount==0) and (orderInfoDO.receiveAmount is None or orderInfoDO.receiveAmount == 0):
+            # if (orderInfoDO.returnAmount is None or orderInfoDO.returnAmount==0) and (orderInfoDO.receiveAmount is None or orderInfoDO.receiveAmount == 0):
                 return self.COD_OUT_STOCK_PROCESS
         #异常订单要记一下
         # raise Exception("异常订单,orderId = "+orderInfoDO.id)
