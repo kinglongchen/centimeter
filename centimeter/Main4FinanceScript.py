@@ -40,7 +40,7 @@ def doOrderReceiptBiz():
     start = time.time()
     finance4ReceiptService = Finance4ReceiptService()
     finance4ReceiptService.doFinanceReceiptDataInit()
-    # finance4ReceiptService.doFinanceReceiptData4ErrorOrder()
+    #finance4ReceiptService.doFinanceReceiptData4ErrorOrder()
     end = time.time()
     print "用时:%ds" %(end-start)
 

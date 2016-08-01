@@ -1,6 +1,7 @@
 # coding=utf-8
 __author__ = 'chenjinlong'
-fileInput = open("../output/receipt/retryfile.txt","r")
+#fileInput = open("../output/receipt/retryfile.txt","r")
+fileInput = open("../output/receipt/result/select_receipt_order.txt","r")
 line = fileInput.readline()
 count = 0
 while line:

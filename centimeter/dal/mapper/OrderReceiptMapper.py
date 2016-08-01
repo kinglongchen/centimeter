@@ -44,3 +44,6 @@ class OrderReceiptMapper(object):
 			session = self.session
 		session.execute(OrderReceiptDO.__table__.insert(),[value.toInsertDict() for value in orderReceiptDOList])
 
+	def selectRemainingAmountNotZearo(self):
+		return self.session.query(OrderReceiptDO).filter(OrderReceiptDO.remainingAmount>0.5).all()
+

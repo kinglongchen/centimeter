@@ -1,13 +1,10 @@
 # coding=utf-8
-import time
 
 import traceback
+
 from common.config import ReceiptConfig
 from dal.domain.do.OrderReceiptDO import OrderReceiptDO
 from dal.domain.do.OrderReceiptRecordDO import OrderReceiptRecordDO
-from dal.domain.do.SaleReturnExchangeBillEntryDO import  SaleReturnExchangeBillEntryDO
-from dal.domain.do.ReturnGoodsBillEntryDO import ReturnGoodsBillEntryDO
-
 from dal.mapper.OrderInfoMapper import OrderInfoMapper
 from dal.mapper.OrderReceiptMapper import OrderReceiptMapper
 from dal.mapper.OrderReceiptRecordMapper import OrderReceiptRecordMapper
@@ -22,6 +19,7 @@ from dal.mapper.SaleReturnExchangeBillMapper import SaleReturnExchangeBillMapper
 from facade.impl.OrderReceiptFacadeImpl import OrderReceiptFacadeImpl
 from server.domain.ReceiptInitParam import ReceiptInitParam
 from server.helper.ReceiptErrorLogTool import ReceiptErrorLogTool
+from server.helper.ReceiptTool4Gift import ReceiptTool4Gift
 
 __author__ = 'chenjinlong'
 class Finance4ReceiptHelper():
@@ -126,9 +124,12 @@ class Finance4ReceiptHelper():
 
     receiptErrorLogTool = ReceiptErrorLogTool()
 
+    receiptTool4Gift = ReceiptTool4Gift()
+
     def __init__(self):
         self.BATCH_NUMBER = 50
         self.fileInput = open("../output/receipt/retryfile.txt","w")
+        self.giftMapInfo = self.receiptTool4Gift.getGiftInfoMap()
 
     def getPayOrderDict(self, outOrderSnList):
         payOrderDict = {}
@@ -283,6 +284,8 @@ class Finance4ReceiptHelper():
 
 
     def buildReceiptInfo(self,orderInfoDOList):
+        #订单的前期处理
+        self.orderInfoBeforeProcess(orderInfoDOList)
         outOrderSnList = []
 
         errorOrderInfoList = []
@@ -826,19 +829,21 @@ class Finance4ReceiptHelper():
         receiptRecord4ReceivedList.append(self.doCodPos4PosPaidConfirm(orderReceipt,receiptInitParam))
         return receiptRecord4ReceivedList
 
-    # 货到付款POS支付 部分支付
-    def doCodPosReceipt4PartRejectPartPaid(self,orderReceipt,receiptInitParam):
-        receiptRecord4ReceivedList = []
-        receiptRecord4ReceivedList += self.doCodPosReceipt4CodOutStock(orderReceipt,receiptInitParam)
-        receiptRecord4ReceivedList.append(self.doCodPos4PosPartPaid(orderReceipt,receiptInitParam))
-        return receiptRecord4ReceivedList
-
     # 货到付款POS支付 部分拒收
     def doCodPosReceipt4PartReject(self,orderReceipt,receiptInitParam):
         receiptRecord4ReceivedList = []
-        receiptRecord4ReceivedList += self.doCodPosReceipt4PartRejectPartPaid(orderReceipt,receiptInitParam)
+        receiptRecord4ReceivedList += self.doCodPosReceipt4CodOutStock(orderReceipt,receiptInitParam)
         receiptRecord4ReceivedList.append(self.doCodPos4CodPartReject(orderReceipt,receiptInitParam))
         return receiptRecord4ReceivedList
+
+    # 货到付款POS支付 部分支付
+    def doCodPosReceipt4PartRejectPartPaid(self,orderReceipt,receiptInitParam):
+        receiptRecord4ReceivedList = []
+        receiptRecord4ReceivedList += self.doCodPosReceipt4PartReject(orderReceipt,receiptInitParam)
+        receiptRecord4ReceivedList.append(self.doCodPos4PosPartPaid(orderReceipt,receiptInitParam))
+        return receiptRecord4ReceivedList
+
+
 
     def doCodPosReceipt4PRPPConfirm(self,orderReceipt,receiptInitParam):
         receiptRecord4ReceivedList = []
@@ -1363,7 +1368,7 @@ class Finance4ReceiptHelper():
             return
 
         if (saleReturnExchangeDOList is not None and len(saleReturnExchangeDOList)!=0) \
-            and (returnGoodsBillEntryDOList is not None and len(returnGoodsBillEntryDOList)!=0):
+            or (returnGoodsBillDOList is not None and len(returnGoodsBillDOList)!=0):
             receiptRecord4ReceivedList +=self.doCommonReceipt4RefundGoods(orderReceipt,receiptInitParam)
 
     def doCommonReceipt4RefundGoods(self,orderReceipt,receiptInitParam):
@@ -1435,7 +1440,7 @@ class Finance4ReceiptHelper():
         returnGoodsRefundAmount = 0
 
         for refundBillDO in refundBillDOList:
-            returnGoodsRefundAmount += refundBillDO.realReturnAmount
+            returnGoodsRefundAmount += refundBillDO.realReturnAmount+refundBillDO.freightFee
 
         return returnGoodsRefundAmount
 
@@ -1449,6 +1454,27 @@ class Finance4ReceiptHelper():
 
         return saleReturnExchangeDOList is not None and len(saleReturnExchangeDOList)!=0
 
+    def getRetrunOrderInfo(self,outOrderSnList):
+        saleReturnExchangeBillDict,saleReturnExchangeBillIdList,saleReturnExchangeBillNoList = self.getSaleReturnExchangeBillDict(outOrderSnList)
+        returnGoodsBillDict,returnGoodsBillIdList,returnGoodsBillNoList = self.getReturnGoodsBillDict(outOrderSnList)
+        orderInfoDict = self.getOrderInfoDict(outOrderSnList)
+        return orderInfoDict,saleReturnExchangeBillDict,returnGoodsBillDict
+
+    def getOrderInfoDict(self, outOrderSnList):
+        if outOrderSnList is None or len(outOrderSnList)==0:
+            return []
+
+        orderInfoDOList = self.orderInfoMapper.selectByOutOrderSnList(outOrderSnList)
+        orderInfoDict = {}
+        for orderInfoDO in orderInfoDOList:
+            orderInfoDict[orderInfoDO.orderSn] = orderInfoDO
+
+        return orderInfoDict
+
+    def orderInfoBeforeProcess(self, orderInfoDOList):
+        for orderInfoDO in orderInfoDOList:
+            giftAmount = self.giftMapInfo.get(orderInfoDO.orderSn,0)
+            orderInfoDO.orderAmount = orderInfoDO.orderAmount-giftAmount
 
 
 

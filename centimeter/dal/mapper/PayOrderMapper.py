@@ -22,3 +22,18 @@ class PayOrderMapper(object):
 	def selectByOutOrderSnList(self, outOrderSnList):
 		return self.session.query(PayOrderDO).filter(PayOrderDO.isDeleted=='N') \
 			.filter(PayOrderDO.outOrderSn.in_(outOrderSnList)).filter(PayOrderDO.orderType.in_([1,3])).all()
+
+	def selectPayOrderInfo(self, outOrderSnList):
+		return self.session.query(PayOrderDO).filter(PayOrderDO.isDeleted=='N')\
+			.filter(PayOrderDO.outOrderSn.in_(outOrderSnList)).filter(PayOrderDO.orderType.in_([1])).all()
+
+	def updatePayOrderAmount(self, updatePayOrderAmountInfo, session):
+		if session is None:
+			session = self.session
+
+		for key,value in updatePayOrderAmountInfo:
+			session.query(PayOrderDO).filter(PayOrderDO.id == key).update({
+				PayOrderDO.payOrderAmount : value
+			})
+
+

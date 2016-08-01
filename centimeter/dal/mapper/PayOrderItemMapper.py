@@ -19,3 +19,19 @@ class PayOrderItemMapper(object):
 	def selectByOutOrderSnList(self, payOrderIdList):
 		return self.session.query(PayOrderItemDO).filter(PayOrderItemDO.isDeleted=='N') \
 			.filter(PayOrderItemDO.payOrderId.in_(payOrderIdList)).all()
+
+	def selectByPayOrderIdList(self, payOrderIdList):
+		if payOrderIdList is None or len(payOrderIdList) == 0:
+			return []
+
+		return self.session.query(PayOrderItemDO).filter(PayOrderItemDO.isDeleted == 'N') \
+			.filter(PayOrderItemDO.payOrderId.in_(payOrderIdList)).all()
+
+	def updatePayOrderItemAmount(self, updatePayOrderItemAmountInfo, session):
+		if session is None:
+			session = self.session
+
+		for key,value in updatePayOrderItemAmountInfo:
+			session.query(PayOrderItemDO).filter(PayOrderItemDO.payOrderId == key).update({
+				PayOrderItemDO.itemAmount : value
+			})
