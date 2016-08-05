@@ -20,7 +20,8 @@ class OrderInfoMapper(object):
 
 	def selectByOutOrderSnList(self, outOrderSnList):
 		return self.session.query(OrderInfoDO).filter(OrderInfoDO.isDeleted=='N')\
-			.filter(OrderInfoDO.orderSn.in_(outOrderSnList)).all()
+			.filter(OrderInfoDO.orderSn.in_(outOrderSnList)).filter(OrderInfoDO.tradeStatus.notin_(["DDJS"]))\
+			.filter(OrderInfoDO.orderSn.notin_(["B15082915001224","B15082915001258","B15082915001262","B15082915001310"])).all()
 
 	def selectBatch(self, start, number):
 		# filter(not_(and_(OrderInfoDO.tradeStatus=="HDSX",OrderInfoDO.payStatus<2))). \

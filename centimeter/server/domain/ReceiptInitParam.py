@@ -9,3 +9,5 @@ class ReceiptInitParam():
     returnGoodsBillEntryDOList = None
     refundBillDOList = None
     saleReturnExchangeBillEntryDOList = None
+    wmsBillEntryDict = None
+    erpBillEntryDict = None

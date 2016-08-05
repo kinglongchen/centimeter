@@ -22,6 +22,9 @@ def getSorcePath():
 def getEmailResourcePath():
     return os.sep.join([getResourcePath(),'email'])
 
+def getOutputPath():
+    return os.sep.join([getRootDirPath(),'output'])
+
 if __name__ == "__main__":
     print getRootDirPath()
     print getLogDirPath()

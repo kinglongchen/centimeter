@@ -1,8 +1,10 @@
 # coding=utf-8
 #初始化配置参数
+from datetime import datetime
 import time
 from common.config.Config import Config
 from common.util.SShTunnel import SSHTunnel
+from dal.mapper.OrderInfoMapper import OrderInfoMapper
 from dal.mapper.OrderReceiptMapper import OrderReceiptMapper
 
 Config.initConf()
@@ -40,7 +42,7 @@ def doOrderReceiptBiz():
     start = time.time()
     finance4ReceiptService = Finance4ReceiptService()
     finance4ReceiptService.doFinanceReceiptDataInit()
-    #finance4ReceiptService.doFinanceReceiptData4ErrorOrder()
+    # finance4ReceiptService.doFinanceReceiptData4ErrorOrder()
     end = time.time()
     print "用时:%ds" %(end-start)
 
@@ -65,5 +67,15 @@ def test():
     end = time.time()
     print "用时:%ds" %(end-start)
 
-doOrderReceiptBiz()
+@MySqlConn.dbWrapper
+@SSHTunnel.sshWrapper
+def doTest():
+    orderInfoMapper = OrderInfoMapper()
+    orderInfoDO = orderInfoMapper.selectByPrimaryKey(221)
+    checkTime = datetime.strptime('2014-01-10 11:01:18',"%Y-%m-%d %H:%M:%S")
+    print orderInfoDO.gmtCreate<checkTime
+
 # main()
+if __name__ == "__main__":
+    doOrderReceiptBiz()
+    # doTest()
