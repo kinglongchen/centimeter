@@ -1,3 +1,5 @@
+/resource/conf/centimeter.bk.json
+/resource/conf/centimeter3.json
 /resource/conf/centimeter.json
 /resource/conf/centimeter2.json
 /output/report
@@ -7,3 +9,6 @@
 /.idea
 /resource/conf/upConfigFile.sh
 /out
+/resource/conf/centimeter4.json
+/output
+/resource/conf/centimeter.json.test
