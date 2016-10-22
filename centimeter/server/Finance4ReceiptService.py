@@ -30,15 +30,15 @@ class Finance4ReceiptService():
         total = 0
         start = 0
         # orderInfoDOList = self.finance4ReceiptHelper.getProcessOrder(start,self.BATCH_NUMBER)
-        orderInfoDOList = self.finance4ReceiptHelper.getProcessOrderTest(["140725220257"])
-        # orderInfoDOList = self.finance4ReceiptHelper.getProcessOrderTest(self.getProcessOrderSnFromFile())
+        # orderInfoDOList = self.finance4ReceiptHelper.getProcessOrderTest(["140725220257"])
+        orderInfoDOList = self.finance4ReceiptHelper.getProcessOrderTest(self.getProcessOrderSnFromFile())
 
         receiptTypeMap = {}
         while orderInfoDOList != None:
             print "正在处理从%d到%d的数据" %(start,start+self.BATCH_NUMBER)
             try:
-                # errorOrderInfoList = self.finance4ReceiptHelper.batchDoProcessFinanceReceipt(orderInfoDOList)
-                errorOrderInfoList = self.finance4ReceiptHelper.batchDoProcessFinanceReceiptTest(orderInfoDOList,receiptTypeMap)
+                errorOrderInfoList = self.finance4ReceiptHelper.batchDoProcessFinanceReceipt(orderInfoDOList)
+                # errorOrderInfoList = self.finance4ReceiptHelper.batchDoProcessFinanceReceiptTest(orderInfoDOList,receiptTypeMap)
                 if errorOrderInfoList:
                     print "异常订单数:%d" %(len(errorOrderInfoList))
                     self.doRetryProcess(errorOrderInfoList)

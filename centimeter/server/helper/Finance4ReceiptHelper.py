@@ -408,8 +408,8 @@ class Finance4ReceiptHelper():
             raise Exception("orderReceipt数据未初始化,orderId = "+ orderInfoDO.id)
 
 
-        receiptType = self.receiptTypeJuge(receiptInitParam)
-
+        # receiptType = self.receiptTypeJuge(receiptInitParam)
+        receiptType = self.COD_CASH_ALL_REJECT_PROCESS
         if ReceiptConfig.isDebug:
             print "匹配应收动作:%s," %(receiptType),"orderSn="+orderInfoDO.orderSn
 
